@@ -1,119 +1,87 @@
-#pragma once
 #include "Projectile.hpp"
-#include "DataTables.hpp"
-#include "Utility.hpp"
-#include "ResourceHolder.hpp"
-
 #include <SFML/Graphics/RenderTarget.hpp>
-#include <SFML/Graphics/RenderStates.hpp>
+#include "DataTables.hpp"
+#include "EmitterNode.hpp"
+#include "ResourceHolder.hpp"
+#include "Utility.hpp"
 
-#include <cmath>
-#include <cassert>
-
-#include "TextureHolder.hpp"
-
-class Projectile :public Enemy
+namespace
 {
-public:
-	enum Type
+	const std::vector<ProjectileData> Table = InitializeProjectileData();
+}
+
+Projectile::Projectile(ProjectileType type, const TextureHolder& textures)
+	: Entity(1)
+	, m_type(type)
+	, m_sprite(textures.Get(Table[static_cast<int>(type)].m_texture), Table[static_cast<int>(type)].m_texture_rect)
+{
+	Utility::CentreOrigin(m_sprite);
+
+	// Add particle system for missiles
+	if (IsGuided())
 	{
-		//Don't know if I should add -t
-		AlliedBullet,
-		EnemyBullet,
-		Missile,
-		TypeCount
-	};
+		std::unique_ptr<EmitterNode> smoke(new EmitterNode(ParticleType::kSmoke));
+		smoke->setPosition(0.f, GetBoundingRect().height / 2.f);
+		AttachChild(std::move(smoke));
 
-public:
-	Projectile(Type type, const TextureHolder& texture);
-	void guideTowards(sf::Vector2f position);
-	bool isGuided() const;
-	virtual unsigned int getCategory() const;
-	virtual sf::FloatRect getBoundingRect const;
-	float getMaxSpeed() const;
-	int getDamage() const;
+		std::unique_ptr<EmitterNode> propellant(new EmitterNode(ParticleType::kPropellant));
+		propellant->setPosition(0.f, GetBoundingRect().height / 2.f);
+		AttachChild(std::move(propellant));
 
-	
-private:
-	virtual void updateCurrent(sf::Time dt, CommandQueue& commands);
-	virtual void drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
-private:
-	Type mType;
-	sf::Sprite mSprite;
-	sf::Vector2f mTargetDirection;
-
-
-
-	//namespace
-	Projectile
-	{
-		const std::vector<ProjectileData> Table = initializeProjectileData();
 	}
+}
 
-	Projectile::Projectile(Type type, const TextureHolder& textures)
-		: Entity(1)
-		, mType(type)
-		, mSprite(textures.get(Table[type].texture))
-		, mTargetDirection()
+void Projectile::GuideTowards(sf::Vector2f position)
+{
+	assert(IsGuided());
+	m_target_direction = Utility::UnitVector(position - GetWorldPosition());
+}
+
+bool Projectile::IsGuided() const
+{
+	return m_type == ProjectileType::kMissile;
+}
+
+unsigned int Projectile::GetCategory() const
+{
+	if (m_type == ProjectileType::kEnemyBullet)
 	{
-		centerOrigin(mSprite);
+		return static_cast<int>(ReceiverCategories::kEnemyProjectile);
 	}
+	else
+		return static_cast<int>(ReceiverCategories::kAlliedProjectile);
+}
 
-	void Projectile::guideTowards(sf::Vector2f position)
+sf::FloatRect Projectile::GetBoundingRect() const
+{
+	return GetWorldTransform().transformRect(m_sprite.getGlobalBounds());
+}
+
+float Projectile::GetMaxSpeed() const
+{
+	return Table[static_cast<int>(m_type)].m_speed;
+}
+
+int Projectile::GetDamage() const
+{
+	return Table[static_cast<int>(m_type)].m_damage;
+}
+
+void Projectile::UpdateCurrent(sf::Time dt, CommandQueue& commands)
+{
+	if (IsGuided())
 	{
-		assert(isGuided());
-		mTargetDirection = unitVector(position - getWorldPosition());
+		const float approach_rate = 200.f;
+		sf::Vector2f new_velocity = Utility::UnitVector(approach_rate * dt.asSeconds() * m_target_direction + GetVelocity());
+		new_velocity *= GetMaxSpeed();
+		float angle = std::atan2(new_velocity.y, new_velocity.x);
+		setRotation(Utility::ToDegrees(angle) + 90.f);
+		SetVelocity(new_velocity);
 	}
+	Entity::UpdateCurrent(dt, commands);
+}
 
-	bool Projectile::isGuided() const
-	{
-		return mType == Missile;
-	}
-
-	void Projectile::updateCurrent(sf::Time dt, CommandQueue& commands)
-	{
-		if (isGuided())
-		{
-			const float approachRate = 200.f;
-
-			sf::Vector2f newVelocity = unitVector(approachRate * dt.asSeconds() * mTargetDirection + getVelocity());
-			newVelocity *= getMaxSpeed();
-			float angle = std::atan2(newVelocity.y, newVelocity.x);
-
-			setRotation(toDegree(angle) + 90.f);
-			setVelocity(newVelocity);
-		}
-
-		Entity::updateCurrent(dt, commands);
-	}
-
-	void Projectile::drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
-	{
-		target.draw(mSprite, states);
-	}
-
-	unsigned int Projectile::getCategory() const
-	{
-		if (mType == EnemyBullet)
-			return Category::EnemyProjectile;
-		else
-			return Category::AlliedProjectile;
-	}
-
-	sf::FloatRect Projectile::getBoundingRect() const
-	{
-		return getWorldTransform().transformRect(mSprite.getGlobalBounds());
-	}
-
-	float Projectile::getMaxSpeed() const
-	{
-		return Table[mType].speed;
-	}
-
-	int Projectile::getDamage() const
-	{
-		return Table[mType].damage;
-	}
-
-
-};
+void Projectile::DrawCurrent(sf::RenderTarget& target, sf::RenderStates states) const
+{
+	target.draw(m_sprite, states);
+}

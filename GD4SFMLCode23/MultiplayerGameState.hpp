@@ -19,7 +19,7 @@ public:
 private:
 	void UpdateBroadcastMessage(sf::Time elpased_time);
 	void HandlePacket(sf::Int32 packet_type, sf::Packet& packet);
-
+	
 private:
 	typedef std::unique_ptr<Player> PlayerPtr;
 
@@ -52,6 +52,4 @@ private:
 	sf::Time m_client_timeout;
 	sf::Time m_time_since_last_packet;
 };
-
-
 

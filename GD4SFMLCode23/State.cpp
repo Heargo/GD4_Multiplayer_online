@@ -1,17 +1,16 @@
-//HUGO REY D00262075 : Added custom_info in the context to pass the information between states. It's used 
-//to display the player who wins in the game over state
-
 #include "State.hpp"
 #include "StateStack.hpp"
 
 
 
-State::Context::Context(sf::RenderWindow& window, TextureHolder& textures, FontHolder& fonts, Player& player, std::string& customInfo)
+State::Context::Context(sf::RenderWindow& window, TextureHolder& textures, FontHolder& fonts, MusicPlayer& music, SoundPlayer& sounds, KeyBinding& keys1, KeyBinding& keys2)
 	: window(&window)
 	, textures(&textures)
 	, fonts(&fonts)
-	, player(&player)
-	, customInfo(&customInfo)
+	, music(&music)
+	, sounds(&sounds)
+	, keys1(&keys1)
+	, keys2(&keys2)
 {
 }
 
@@ -40,14 +39,19 @@ void State::RequestStackClear()
 	m_stack->ClearState();
 }
 
-void State::EditContextCustomInfo(std::string new_value)
-{
-	*m_context.customInfo = new_value;
-}
-
 State::Context State::GetContext() const
 {
 	return m_context;
+}
+
+void State::OnActivate()
+{
+
+}
+
+void State::OnDestroy()
+{
+
 }
 
 
