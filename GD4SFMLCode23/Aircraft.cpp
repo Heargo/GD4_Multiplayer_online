@@ -14,6 +14,7 @@
 #include "NetworkNode.hpp"
 
 #include <iostream>
+#include <SFML/Graphics/RenderWindow.hpp>
 
 namespace
 {
@@ -417,4 +418,28 @@ void Aircraft::PlayLocalSound(CommandQueue& commands, SoundEffect effect)
 	});
 
 	commands.Push(command);
+}
+
+void Aircraft::RotateInMouseDirection(sf::Vector2i mousePos, sf::RenderWindow& window)
+{
+
+	//log to console the mouse pos
+	//std::cout << "mouse pos: " << mousePos.x << "," << mousePos.y << std::endl;
+
+	//get current position in the screen (between 1920x1080)
+	//sf::Vector2i curPos = window.mapCoordsToPixel(getPosition());
+	float width = window.getSize().x;
+	float height = window.getSize().y;
+	sf::Vector2i centerOfScreen = sf::Vector2i(width / 2, height / 2);
+	//std::cout << "curPos pos: " << curPos.x << "," << curPos.y << std::endl;
+	const float PI = 3.14159265;
+
+	float dx = centerOfScreen.x - mousePos.x;
+	float dy = centerOfScreen.y - mousePos.y;
+	float rotation = atan2f(dx, dy) * 180 / PI;
+
+
+	//log to console
+	//std::cout << "Rotation: " << rotation << std::endl;
+	setRotation(-rotation);
 }

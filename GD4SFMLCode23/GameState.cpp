@@ -7,7 +7,7 @@ GameState::GameState(StateStack& stack, Context context)
     , m_world(*context.window, *context.fonts, *context.sounds, false)
     , m_player(nullptr, 1, context.keys1)
 {
-    m_world.AddAircraft(1);
+    m_world.AddAircraft(1,true);
     m_player.SetMissionStatus(MissionStatus::kMissionRunning);
     // Play game theme
     context.music->Play(MusicThemes::kMissionTheme);

@@ -4,7 +4,8 @@
 #include <algorithm>
 
 KeyBinding::KeyBinding(int control_preconfiguration)
-	: m_key_map()
+	: m_key_map(),
+	m_mouse_map()
 {
 	// Set initial key bindings for player 1
 	if (control_preconfiguration == 1)
@@ -15,6 +16,10 @@ KeyBinding::KeyBinding(int control_preconfiguration)
 		m_key_map[sf::Keyboard::Down] = Action::kMoveDown;
 		m_key_map[sf::Keyboard::Space] = Action::kBulletFire;
 		m_key_map[sf::Keyboard::M] = Action::kMissileFire;
+		
+		//mouse bindings
+		m_mouse_map[sf::Mouse::Left] = Action::kBulletFire;
+		m_mouse_map[sf::Mouse::Right] = Action::kAccelerate;
 	}
 	else if (control_preconfiguration == 2)
 	{
@@ -25,6 +30,10 @@ KeyBinding::KeyBinding(int control_preconfiguration)
 		m_key_map[sf::Keyboard::S] = Action::kMoveDown;
 		m_key_map[sf::Keyboard::F] = Action::kBulletFire;
 		m_key_map[sf::Keyboard::R] = Action::kMissileFire;
+
+		//mouse bindings
+		m_mouse_map[sf::Mouse::Left] = Action::kBulletFire;
+		m_mouse_map[sf::Mouse::Right] = Action::kAccelerate;
 	}
 }
 
@@ -68,6 +77,20 @@ bool KeyBinding::CheckAction(sf::Keyboard::Key key, Action& out) const
 	}
 }
 
+bool KeyBinding::CheckAction(sf::Mouse::Button button, Action& out) const
+{
+	auto found = m_mouse_map.find(button);
+	if (found == m_mouse_map.end())
+	{
+		return false;
+	}
+	else
+	{
+		out = found->second;
+		return true;
+	}
+}
+
 std::vector<Action> KeyBinding::GetRealtimeActions() const
 {
 	// Return all realtime actions that are currently active.
@@ -77,6 +100,14 @@ std::vector<Action> KeyBinding::GetRealtimeActions() const
 	{
 		// If key is pressed and an action is a realtime action, store it
 		if (sf::Keyboard::isKeyPressed(pair.first) && IsRealtimeAction(pair.second))
+			actions.push_back(pair.second);
+	}
+
+	//same for mouse
+	for (auto pair : m_mouse_map)
+	{
+		// If key is pressed and an action is a realtime action, store it
+		if (sf::Mouse::isButtonPressed(pair.first) && IsRealtimeAction(pair.second))
 			actions.push_back(pair.second);
 	}
 
@@ -92,6 +123,7 @@ bool IsRealtimeAction(Action action)
 	case Action::kMoveDown:
 	case Action::kMoveUp:
 	case Action::kBulletFire:
+	case Action::kAccelerate:
 		return true;
 
 	default:

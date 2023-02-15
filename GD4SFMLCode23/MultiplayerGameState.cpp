@@ -232,6 +232,10 @@ bool MultiplayerGameState::Update(sf::Time dt)
 			{
 				if (Aircraft* aircraft = m_world.GetAircraft(identifier))
 				{
+					//rotate the aircraft to face mouse position
+					sf::Vector2i mousePos = sf::Mouse::getPosition(m_window);
+					aircraft->RotateInMouseDirection(mousePos, m_window);
+					
 					position_update_packet << identifier << aircraft->getPosition().x << aircraft->getPosition().y << static_cast<sf::Int32>(aircraft->GetHitPoints()) << static_cast<sf::Int32>(aircraft->GetMissileAmmo());
 				}
 			}
@@ -364,10 +368,11 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		sf::Int32 aircraft_identifier;
 		sf::Vector2f aircraft_position;
 		packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y;
-		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier);
+		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier,true);
 		aircraft->setPosition(aircraft_position);
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, GetContext().keys1));
 		m_local_player_identifiers.push_back(aircraft_identifier);
+		//TODO LOCAL PLAYER
 		m_game_started = true;
 	}
 	break;
@@ -378,7 +383,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		sf::Vector2f aircraft_position;
 		packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y;
 
-		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier);
+		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier,false);
 		aircraft->setPosition(aircraft_position);
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, nullptr));
 	}
@@ -411,7 +416,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 			sf::Vector2f aircraft_position;
 			packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y >> hitpoints >> missile_ammo;
 
-			Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier);
+			Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier,false);
 			aircraft->setPosition(aircraft_position);
 			aircraft->SetHitpoints(hitpoints);
 			aircraft->SetMissileAmmo(missile_ammo);
@@ -426,7 +431,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		sf::Int32 aircraft_identifier;
 		packet >> aircraft_identifier;
 
-		m_world.AddAircraft(aircraft_identifier);
+		m_world.AddAircraft(aircraft_identifier,false);
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, GetContext().keys2));
 		m_local_player_identifiers.emplace_back(aircraft_identifier);
 	}

@@ -6,6 +6,7 @@
 #include "Animation.hpp"
 #include "TextNode.hpp"
 #include "ProjectileType.hpp"
+#include <SFML/Graphics/RenderWindow.hpp>
 
 class Aircraft : public Entity
 {
@@ -34,6 +35,7 @@ public:
 	bool IsMarkedForRemoval() const override;
 	void Remove() override;
 	void PlayLocalSound(CommandQueue& commands, SoundEffect effect);
+	void RotateInMouseDirection(sf::Vector2i mousePos, sf::RenderWindow& window);
 
 private:
 	virtual void DrawCurrent(sf::RenderTarget& target, sf::RenderStates states) const override;

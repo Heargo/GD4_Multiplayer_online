@@ -34,7 +34,7 @@ public:
 	sf::FloatRect GetViewBounds() const;
 	CommandQueue& GetCommandQueue();
 	
-	Aircraft* AddAircraft(int identifier);
+	Aircraft* AddAircraft(int identifier,bool isLocalPlayer);
 	void RemoveAircraft(int identifier);
 	void SetCurrentBattleFieldPosition(float line_y);
 	void SetWorldHeight(float height);
@@ -50,6 +50,10 @@ public:
 	sf::FloatRect GetBattlefieldBounds() const;
 	void CreatePickup(sf::Vector2f position, PickupType type);
 	bool PollGameAction(GameActions::Action& out);
+
+	bool IsLocalPlayer(int identifier);
+
+	
 
 private:
 	void LoadTextures();
@@ -105,5 +109,7 @@ private:
 	bool m_networked_world;
 	NetworkNode* m_network_node;
 	SpriteNode* m_finish_sprite;
+
+	std::vector<sf::Int32> m_local_player_identifiers;
 };
 

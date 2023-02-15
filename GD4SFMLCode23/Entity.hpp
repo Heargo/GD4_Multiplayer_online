@@ -11,20 +11,26 @@ public:
 	sf::Vector2f GetVelocity() const;
 	void Accelerate(sf::Vector2f velocity);
 	void Accelerate(float vx, float vy);
+	void AccelerateForward(float speed);
+
+	void ApplyFriction();
+	void Rotate(sf::Vector2f velocity);
+
+	virtual void Remove();
+	void SetHitpoints(int points);
+
 
 	int GetHitPoints() const;
-	void SetHitpoints(int points);
 	void Repair(unsigned int points);
 	void Damage(unsigned int points);
 	void Destroy();
-	virtual bool IsDestroyed() const override;
-	virtual void Remove();
+	virtual bool IsDestroyed() const;
 
 protected:
 	virtual void UpdateCurrent(sf::Time dt, CommandQueue& commands);
 
 private:
 	sf::Vector2f m_velocity;
+	void RegulatePlayerSpeed();
 	int m_hitpoints;
 };
-

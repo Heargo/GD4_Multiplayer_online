@@ -2,6 +2,7 @@
 #include <map>
 #include <vector>
 #include <SFML/Window/Keyboard.hpp>
+#include <SFML/Window/Mouse.hpp>
 #include "Action.hpp"
 
 class KeyBinding
@@ -13,10 +14,12 @@ public:
 	sf::Keyboard::Key GetAssignedKey(Action action) const;
 
 	bool CheckAction(sf::Keyboard::Key key, Action& out) const;
+	bool CheckAction(sf::Mouse::Button, Action& out) const;
 	std::vector<Action>	GetRealtimeActions() const;
 
 private:
 	std::map<sf::Keyboard::Key, Action>	m_key_map;
+	std::map<sf::Mouse::Button, Action>	m_mouse_map;
 };
 
 bool IsRealtimeAction(Action action);

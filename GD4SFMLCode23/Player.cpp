@@ -19,7 +19,7 @@ struct AircraftMover
     {
         if (aircraft.GetIdentifier() == aircraft_id)
         {
-            aircraft.Accelerate(velocity * aircraft.GetMaxSpeed());
+            aircraft.AccelerateForward(10.f);
         }
     }
     sf::Vector2f velocity;
@@ -112,6 +112,30 @@ void Player::HandleEvent(const sf::Event& event, CommandQueue& commands)
             m_socket->send(packet);
         }
     }
+
+    // Same for mouse
+	if (event.type == sf::Event::MouseButtonPressed)
+	{
+		Action action;
+		if (m_key_binding && m_key_binding->CheckAction(event.mouseButton.button, action) && !IsRealtimeAction(action))
+		{
+			// Network connected -> send event over network
+			if (m_socket)
+			{
+				sf::Packet packet;
+				packet << static_cast<sf::Int32>(Client::PacketType::kPlayerEvent);
+				packet << m_identifier;
+				packet << static_cast<sf::Int32>(action);
+				m_socket->send(packet);
+			}
+
+			// Network disconnected -> local event
+			else
+			{
+				commands.Push(m_action_binding[action]);
+			}
+		}
+	}
 }
 
 bool Player::IsLocal() const
@@ -186,4 +210,6 @@ void Player::InitializeActions()
     m_action_binding[Action::kMoveDown].action = DerivedAction<Aircraft>(AircraftMover(0.f, 1, m_identifier));
     m_action_binding[Action::kBulletFire].action = DerivedAction<Aircraft>(AircraftFireTrigger(m_identifier));
     m_action_binding[Action::kMissileFire].action = DerivedAction<Aircraft>(AircraftMissileTrigger(m_identifier));
+
+    m_action_binding[Action::kAccelerate].action = DerivedAction<Aircraft>(AircraftMover(0, 0, m_identifier));
 }

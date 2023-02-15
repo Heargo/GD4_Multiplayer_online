@@ -8,6 +8,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <iostream>
 #include <limits>
+#include <SFML/Window/Mouse.hpp>
 
 World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sounds, bool networked)
 	:m_target(output_target)
@@ -17,7 +18,7 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_sounds(sounds)
 	,m_scenegraph()
 	,m_scene_layers()
-	,m_world_bounds(0.f, 0.f, m_camera.getSize().x, 5000.f)
+	,m_world_bounds(0.f, 0.f, 5000.f, 5000.f)
 	,m_spawn_position(m_camera.getSize().x/2.f, m_world_bounds.height - m_camera.getSize().y/2.f)
 	,m_scrollspeed(-50.f)
 	,m_scrollspeed_compensation(1.f)
@@ -42,16 +43,19 @@ void World::SetWorldScrollCompensation(float compensation)
 
 void World::Update(sf::Time dt)
 {
-	//Scroll the world
-	m_camera.move(0, m_scrollspeed * dt.asSeconds()*m_scrollspeed_compensation);
+	//stick camera to local player
+	//TODO
+	//m_camera.setCenter(m_player_1->getPosition());
 	
 	for (Aircraft* a : m_player_aircraft)
 	{
-		a->SetVelocity(0.f, 0.f);
+		a->ApplyFriction();
+		//camera follow local player
+		if(IsLocalPlayer(a->GetIdentifier()))
+			m_camera.setCenter(a->getPosition());
 	}
 
-	DestroyEntitiesOutsideView();
-	GuideMissiles();
+	DestroyEntitiesOutsideView(); // maybe to remove (?)
 
 
 	//Forward the commands to the scenegraph, sort out velocity
@@ -69,7 +73,7 @@ void World::Update(sf::Time dt)
 	m_player_aircraft.erase(first_to_remove, m_player_aircraft.end());
 	m_scenegraph.RemoveWrecks();
 
-	SpawnEnemies();
+	//SpawnEnemies();
 	
 	//Apply movement
 	m_scenegraph.Update(dt, m_command_queue);
@@ -117,7 +121,7 @@ void World::RemoveAircraft(int identifier)
 	}
 }
 
-Aircraft* World::AddAircraft(int identifier)
+Aircraft* World::AddAircraft(int identifier,bool isLocalPlayer)
 {
 	std::unique_ptr<Aircraft> player(new Aircraft(AircraftType::kEagle, m_textures, m_fonts));
 	player->setPosition(m_camera.getCenter());
@@ -125,6 +129,10 @@ Aircraft* World::AddAircraft(int identifier)
 
 	m_player_aircraft.emplace_back(player.get());
 	m_scene_layers[static_cast<int>(Layers::kUpperAir)]->AttachChild(std::move(player));
+
+	if(isLocalPlayer)
+		m_local_player_identifiers.push_back(identifier);
+	
 	return m_player_aircraft.back();
 }
 
@@ -139,6 +147,12 @@ void World::CreatePickup(sf::Vector2f position, PickupType type)
 bool World::PollGameAction(GameActions::Action& out)
 {
 	return m_network_node->PollGameAction(out);
+}
+
+bool World::IsLocalPlayer(int identifier)
+{
+	//check if in m_local_player_identifiers
+	return std::find(m_local_player_identifiers.begin(), m_local_player_identifiers.end(), identifier) != m_local_player_identifiers.end();
 }
 
 void World::SetCurrentBattleFieldPosition(float lineY)
@@ -241,7 +255,7 @@ void World::AdaptPlayerPosition()
 	sf::FloatRect view_bounds = GetViewBounds();
 	const float border_distance = 40.f;
 	
-	for(Aircraft* aircraft : m_player_aircraft)
+	/*for(Aircraft* aircraft : m_player_aircraft)
 	{
 		sf::Vector2f position = aircraft->getPosition();
 		position.x = std::max(position.x, view_bounds.left + border_distance);
@@ -249,7 +263,7 @@ void World::AdaptPlayerPosition()
 		position.y = std::max(position.y, view_bounds.top + border_distance);
 		position.y = std::min(position.y, view_bounds.top + view_bounds.height - border_distance);
 		aircraft->setPosition(position);
-	}
+	}*/
 }
 
 void World::AdaptPlayerVelocity()
@@ -258,14 +272,11 @@ void World::AdaptPlayerVelocity()
 	{
 		sf::Vector2f velocity = aircraft->GetVelocity();
 
-		//If moving diagonally, reduce velocity (to have always same velocity)
-		if (velocity.x != 0.f && velocity.y != 0.f)
+		//Apply friction to the player
+		/*if (velocity.x != 0.f && velocity.y != 0.f)
 		{
-			aircraft->SetVelocity(velocity / std::sqrt(2.f));
-		}
-
-		//Add scrolling velocity
-		aircraft->Accelerate(0.f, m_scrollspeed);
+			aircraft->SetVelocity(velocity * 0.7071f);
+		}*/
 	}
 }
 
