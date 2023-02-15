@@ -19,7 +19,7 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_scenegraph()
 	,m_scene_layers()
 	,m_world_bounds(0.f, 0.f, 5000.f, 5000.f)
-	,m_spawn_position(m_camera.getSize().x/2.f, m_world_bounds.height - m_camera.getSize().y/2.f)
+	,m_spawn_position()
 	,m_scrollspeed(-50.f)
 	,m_scrollspeed_compensation(1.f)
 	,m_player_aircraft()
@@ -188,7 +188,7 @@ CommandQueue& World::GetCommandQueue()
 void World::LoadTextures()
 {
 	m_textures.Load(Texture::kEntities, "Media/Textures/Entities.png");
-	m_textures.Load(Texture::kJungle, "Media/Textures/Jungle.png");
+	m_textures.Load(Texture::kSpace, "Media/Textures/greenNebula.png");
 	m_textures.Load(Texture::kExplosion, "Media/Textures/Explosion.png");
 	m_textures.Load(Texture::kParticle, "Media/Textures/Particle.png");
 	m_textures.Load(Texture::kFinishLine, "Media/Textures/FinishLine.png");
@@ -206,7 +206,12 @@ void World::BuildScene()
 	}
 
 	//Prepare the background
-	sf::Texture& texture = m_textures.Get(Texture::kJungle);
+	sf::Texture& texture = m_textures.Get(Texture::kSpace);
+	sf::IntRect textureRect(m_world_bounds);
+	//expand textureRect to make the background bigger than the canvas
+	int sizeIncrease = 1920;
+	textureRect.width += sizeIncrease;
+	textureRect.height += sizeIncrease;
 	texture.setRepeated(true);
 
 	float view_height = m_camera.getSize().y;
@@ -214,8 +219,9 @@ void World::BuildScene()
 	texture_rect.height += static_cast<int>(view_height);
 
 	//Add the background sprite to the world
-	std::unique_ptr<SpriteNode> background_sprite(new SpriteNode(texture, texture_rect));
-	background_sprite->setPosition(m_world_bounds.left, m_world_bounds.top - view_height);
+	std::unique_ptr<SpriteNode> background_sprite(new SpriteNode(texture, textureRect));
+	background_sprite->setPosition(m_world_bounds.left - sizeIncrease / 2, m_world_bounds.top - sizeIncrease / 2);
+	//background_sprite->sceneNodeName = "Background";
 	m_scene_layers[static_cast<int>(Layers::kBackground)]->AttachChild(std::move(background_sprite));
 
 	//Add the finish line to the scene
@@ -253,17 +259,19 @@ void World::AdaptPlayerPosition()
 {
 	//Keep the player on the sceen 
 	sf::FloatRect view_bounds = GetViewBounds();
+	sf::FloatRect world_bounds = (m_spawn_position, m_world_bounds);
 	const float border_distance = 40.f;
 	
-	/*for(Aircraft* aircraft : m_player_aircraft)
+	for (Aircraft* aircraft : m_player_aircraft)
 	{
+		//keep player in the world
 		sf::Vector2f position = aircraft->getPosition();
-		position.x = std::max(position.x, view_bounds.left + border_distance);
-		position.x = std::min(position.x, view_bounds.left + view_bounds.width - border_distance);
-		position.y = std::max(position.y, view_bounds.top + border_distance);
-		position.y = std::min(position.y, view_bounds.top + view_bounds.height - border_distance);
+		position.x = std::max(position.x, world_bounds.left + border_distance);
+		position.x = std::min(position.x, world_bounds.left + world_bounds.width - border_distance);
+		position.y = std::max(position.y, world_bounds.top + border_distance);
+		position.y = std::min(position.y, world_bounds.top + world_bounds.height - border_distance);
 		aircraft->setPosition(position);
-	}*/
+	}
 }
 
 void World::AdaptPlayerVelocity()

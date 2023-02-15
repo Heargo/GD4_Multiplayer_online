@@ -2,7 +2,7 @@
 enum class Texture
 {
 	kEntities,
-	kJungle,
+	kSpace,
 	kButtons, 
 	kExplosion,
 	kParticle,
