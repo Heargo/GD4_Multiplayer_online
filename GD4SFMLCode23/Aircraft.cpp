@@ -21,24 +21,15 @@ namespace
 	const std::vector<AircraftData> Table = InitializeAircraftData();
 }
 
-Texture ToTextureID(AircraftType type)
+Texture ToTextureID(bool isLocalPlayer)
 {
-	switch (type)
-	{
-	case AircraftType::kEagle:
-		return Texture::kEagle;
-		break;
-	case AircraftType::kRaptor:
-		return Texture::kRaptor;
-		break;
-	case AircraftType::kAvenger:
-		return Texture::kAvenger;
-		break;
-	}
-	return Texture::kEagle;
+	if(isLocalPlayer)
+		return Texture::kLocalPlayer;
+	else
+		return Texture::kRemotePlayer;
 }
 
-Aircraft::Aircraft(AircraftType type, const TextureHolder& textures, const FontHolder& fonts) 
+Aircraft::Aircraft(AircraftType type, const TextureHolder& textures, const FontHolder& fonts, bool isLocalPlayer) 
 	: Entity(Table[static_cast<int>(type)].m_hitpoints)
 	, m_type(type) 
 	, m_sprite(textures.Get(Table[static_cast<int>(type)].m_texture), Table[static_cast<int>(type)].m_texture_rect)
@@ -61,6 +52,17 @@ Aircraft::Aircraft(AircraftType type, const TextureHolder& textures, const FontH
 	, m_pickups_enabled(true)
 	
 {
+
+	m_sprite = sf::Sprite(textures.Get(ToTextureID(isLocalPlayer)));
+	//set the max size of the sprite to 100x100
+	sf::FloatRect bounds = m_sprite.getLocalBounds();
+	m_sprite.setOrigin(bounds.width / 2.f, bounds.height / 2.f);
+	//std::string empty_string = "";
+
+	//fix max size of sprite to 100x100
+	m_sprite.setScale(100.f / bounds.width, 100.f / bounds.height);
+
+
 	m_explosion.SetFrameSize(sf::Vector2i(256, 256));
 	m_explosion.SetNumFrames(16);
 	m_explosion.SetDuration(sf::seconds(1));
@@ -74,11 +76,11 @@ Aircraft::Aircraft(AircraftType type, const TextureHolder& textures, const FontH
 		CreateBullet(node, textures);
 	};
 
-	m_missile_command.category = static_cast<int>(ReceiverCategories::kScene);
-	m_missile_command.action = [this, &textures](SceneNode& node, sf::Time dt)
-	{
-		CreateProjectile(node, ProjectileType::kMissile, 0.f, 0.5f, textures);
-	};
+	//m_missile_command.category = static_cast<int>(ReceiverCategories::kScene);
+	//m_missile_command.action = [this, &textures](SceneNode& node, sf::Time dt)
+	//{
+	//	CreateProjectile(node, ProjectileType::kMissile, 0.f, 0.5f, textures);
+	//};
 
 	m_drop_pickup_command.category = static_cast<int>(ReceiverCategories::kScene);
 	m_drop_pickup_command.action = [this, &textures](SceneNode& node, sf::Time)
@@ -234,7 +236,19 @@ void Aircraft::LaunchMissile()
 void Aircraft::CreateBullet(SceneNode& node, const TextureHolder& textures) const
 {
 	ProjectileType type = IsAllied() ? ProjectileType::kAlliedBullet : ProjectileType::kEnemyBullet;
-	switch (m_spread_level)
+	//TODO make the bullet allied for local player only
+	
+	//get the position of the bullet depending on the rotation of the aircraft
+	float rotation = getRotation();
+	float offset = 50.f;
+	sf::Vector2f pos = getPosition();
+	sf::Vector2f direction = sf::Vector2f(std::sin(rotation * 3.14159265 / 180), -std::cos(rotation * 3.14159265 / 180));
+	direction = direction / std::sqrt(direction.x * direction.x + direction.y * direction.y);
+	direction = direction * offset;
+	pos = pos + direction;
+	
+	CreateProjectile(node, type, pos, textures);
+	/*switch (m_spread_level)
 	{
 	case 1:
 		CreateProjectile(node, type, 0.0f, 0.5f, textures);
@@ -248,19 +262,23 @@ void Aircraft::CreateBullet(SceneNode& node, const TextureHolder& textures) cons
 		CreateProjectile(node, type, -0.5f, 0.5f, textures);
 		CreateProjectile(node, type, 0.5f, 0.5f, textures);
 		break;
-	}
+	}*/
 }
 
 
-void Aircraft::CreateProjectile(SceneNode& node, ProjectileType type, float x_offset, float y_offset, const TextureHolder& textures) const
+void Aircraft::CreateProjectile(SceneNode& node, ProjectileType type, sf::Vector2f bulletPosition, const TextureHolder& textures) const
 {
 	std::unique_ptr<Projectile> projectile(new Projectile(type, textures));
-	sf::Vector2f offset(x_offset * m_sprite.getGlobalBounds().width, y_offset * m_sprite.getGlobalBounds().height);
-	sf::Vector2f velocity(0, projectile->GetMaxSpeed());
+	//set the velocity of the bullet depending on the rotation of the aircraft
+	float rotation = getRotation();
+	sf::Vector2f velocity = sf::Vector2f(std::sin(rotation * 3.14159265 / 180), -std::cos(rotation * 3.14159265 / 180));
+	velocity = velocity * 800.f;
+	std::cout << "velocity is (" << velocity.x << "," << velocity.y <<")" << std::endl;
+	projectile->SetVelocity(velocity);
 
-	float sign = IsAllied() ? -1.f: +1.f;
-	projectile->setPosition(GetWorldPosition() + offset * sign);
-	projectile->SetVelocity(velocity * sign);
+	projectile->setPosition(bulletPosition);
+	projectile->SetVelocity(velocity);
+	projectile->setRotation(getRotation());
 	node.AttachChild(std::move(projectile));
 }
 
@@ -389,20 +407,20 @@ void Aircraft::Remove()
 
 void Aircraft::UpdateRollAnimation()
 {
-	if (Table[static_cast<int>(m_type)].m_has_roll_animation)
-	{
-		sf::IntRect textureRect = Table[static_cast<int>(m_type)].m_texture_rect;
+	//if (Table[static_cast<int>(m_type)].m_has_roll_animation)
+	//{
+	//	sf::IntRect textureRect = Table[static_cast<int>(m_type)].m_texture_rect;
 
-		// Roll left: Texture rect offset once
-		if (GetVelocity().x < 0.f)
-			textureRect.left += textureRect.width;
+	//	// Roll left: Texture rect offset once
+	//	if (GetVelocity().x < 0.f)
+	//		textureRect.left += textureRect.width;
 
-		// Roll right: Texture rect offset twice
-		else if (GetVelocity().x > 0.f)
-			textureRect.left += 2 * textureRect.width;
+	//	// Roll right: Texture rect offset twice
+	//	else if (GetVelocity().x > 0.f)
+	//		textureRect.left += 2 * textureRect.width;
 
-		m_sprite.setTextureRect(textureRect);
-	}
+	//	m_sprite.setTextureRect(textureRect);
+	//}
 }
 
 void Aircraft::PlayLocalSound(CommandQueue& commands, SoundEffect effect)

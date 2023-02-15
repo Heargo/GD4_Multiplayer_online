@@ -123,7 +123,7 @@ void World::RemoveAircraft(int identifier)
 
 Aircraft* World::AddAircraft(int identifier,bool isLocalPlayer)
 {
-	std::unique_ptr<Aircraft> player(new Aircraft(AircraftType::kEagle, m_textures, m_fonts));
+	std::unique_ptr<Aircraft> player(new Aircraft(AircraftType::kEagle, m_textures, m_fonts, isLocalPlayer));
 	player->setPosition(m_camera.getCenter());
 	player->SetIdentifier(identifier);
 
@@ -191,7 +191,13 @@ void World::LoadTextures()
 	m_textures.Load(Texture::kSpace, "Media/Textures/greenNebula.png");
 	m_textures.Load(Texture::kExplosion, "Media/Textures/Explosion.png");
 	m_textures.Load(Texture::kParticle, "Media/Textures/Particle.png");
-	m_textures.Load(Texture::kFinishLine, "Media/Textures/FinishLine.png");
+
+	//print "ok" in console
+	std::cout << "ok" << std::endl;
+
+	m_textures.Load(Texture::kLocalPlayer, "Media/Textures/Spaceship_01_BLUE.png");
+	m_textures.Load(Texture::kRemotePlayer, "Media/Textures/Spaceship_01_RED.png");
+	std::cout << "ok spaceships" << std::endl;
 }
 
 void World::BuildScene()
@@ -223,13 +229,6 @@ void World::BuildScene()
 	background_sprite->setPosition(m_world_bounds.left - sizeIncrease / 2, m_world_bounds.top - sizeIncrease / 2);
 	//background_sprite->sceneNodeName = "Background";
 	m_scene_layers[static_cast<int>(Layers::kBackground)]->AttachChild(std::move(background_sprite));
-
-	//Add the finish line to the scene
-	sf::Texture& finish_texture = m_textures.Get(Texture::kFinishLine);
-	std::unique_ptr<SpriteNode> finish_sprite(new SpriteNode(finish_texture));
-	finish_sprite->setPosition(0.f, -76.f);
-	m_finish_sprite = finish_sprite.get();
-	m_scene_layers[static_cast<int>(Layers::kBackground)]->AttachChild(std::move(finish_sprite));
 
 
 	// Add particle node to the scene
@@ -305,23 +304,23 @@ sf::FloatRect World::GetBattlefieldBounds() const
 
 void World::SpawnEnemies()
 {
-	//Spawn an enemy when it is relevant i.e when about to come on screen - in BattleFieldBounds
-	while (!m_enemy_spawn_points.empty() && m_enemy_spawn_points.back().m_y > GetBattlefieldBounds().top)
-	{
-		SpawnPoint spawn = m_enemy_spawn_points.back();
-		
-		std::unique_ptr<Aircraft> enemy(new Aircraft(spawn.m_type, m_textures, m_fonts));
-		enemy->setPosition(spawn.m_x, spawn.m_y);
-		enemy->setRotation(180.f);
-		//If the game is networked the server is responsible for spawning pickups
-		
-		if (m_networked_world)
-		{
-			enemy->DisablePickups();
-		}
-		m_scene_layers[static_cast<int>(Layers::kUpperAir)]->AttachChild(std::move(enemy));
-		m_enemy_spawn_points.pop_back();
-	}
+	////Spawn an enemy when it is relevant i.e when about to come on screen - in BattleFieldBounds
+	//while (!m_enemy_spawn_points.empty() && m_enemy_spawn_points.back().m_y > GetBattlefieldBounds().top)
+	//{
+	//	SpawnPoint spawn = m_enemy_spawn_points.back();
+	//	
+	//	std::unique_ptr<Aircraft> enemy(new Aircraft(spawn.m_type, m_textures, m_fonts));
+	//	enemy->setPosition(spawn.m_x, spawn.m_y);
+	//	enemy->setRotation(180.f);
+	//	//If the game is networked the server is responsible for spawning pickups
+	//	
+	//	if (m_networked_world)
+	//	{
+	//		enemy->DisablePickups();
+	//	}
+	//	m_scene_layers[static_cast<int>(Layers::kUpperAir)]->AttachChild(std::move(enemy));
+	//	m_enemy_spawn_points.pop_back();
+	//}
 }
 
 void World::AddEnemy(AircraftType type, float relX, float relY)

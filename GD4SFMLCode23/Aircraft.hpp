@@ -11,7 +11,7 @@
 class Aircraft : public Entity
 {
 public:
-	Aircraft(AircraftType type, const TextureHolder& textures, const FontHolder& fonts);
+	Aircraft(AircraftType type, const TextureHolder& textures, const FontHolder& fonts, bool isLocalPlayer);
 	unsigned int GetCategory() const override;
 
 	void DisablePickups();
@@ -29,7 +29,7 @@ public:
 	void Fire();
 	void LaunchMissile();
 	void CreateBullet(SceneNode& node, const TextureHolder& textures) const;
-	void CreateProjectile(SceneNode& node, ProjectileType type, float x_offset, float y_offset, const TextureHolder& textures) const;
+	void CreateProjectile(SceneNode& node, ProjectileType type, sf::Vector2f bulletPosition, const TextureHolder& textures) const;
 
 	sf::FloatRect GetBoundingRect() const override;
 	bool IsMarkedForRemoval() const override;
