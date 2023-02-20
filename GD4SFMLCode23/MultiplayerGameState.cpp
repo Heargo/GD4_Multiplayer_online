@@ -236,7 +236,7 @@ bool MultiplayerGameState::Update(sf::Time dt)
 					sf::Vector2i mousePos = sf::Mouse::getPosition(m_window);
 					aircraft->RotateInMouseDirection(mousePos, m_window);
 					
-					position_update_packet << identifier << aircraft->getPosition().x << aircraft->getPosition().y << static_cast<sf::Int32>(aircraft->GetHitPoints()) << static_cast<sf::Int32>(aircraft->GetMissileAmmo());
+					position_update_packet << identifier << aircraft->getPosition().x << aircraft->getPosition().y << static_cast<sf::Int32>(aircraft->GetHitPoints()) << static_cast<sf::Int32>(aircraft->GetMissileAmmo()) << aircraft->getRotation();
 				}
 			}
 			m_socket.send(position_update_packet);
@@ -447,6 +447,8 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		auto itr = m_players.find(aircraft_identifier);
 		if (itr != m_players.end())
 		{
+			//log player id with action name
+			std::cout << "Player " << aircraft_identifier << " " << action << std::endl;
 			itr->second->HandleNetworkEvent(static_cast<Action>(action), m_world.GetCommandQueue());
 		}
 	}
@@ -507,7 +509,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		float current_view_position = m_world.GetViewBounds().top + m_world.GetViewBounds().height;
 
 		//Set the world's scroll compensation according to whether the view is behind or ahead
-		m_world.SetWorldScrollCompensation(current_view_position / current_world_position);
+		//m_world.SetWorldScrollCompensation(current_view_position / current_world_position);
 
 		for (sf::Int32 i = 0; i < aircraft_count; ++i)
 		{
@@ -515,7 +517,8 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 			sf::Int32 aircraft_identifier;
 			sf::Int32 hitpoints;
 			sf::Int32 ammo;
-			packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y >> hitpoints >> ammo;
+			float rotation;
+			packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y >> hitpoints >> ammo >> rotation;
 
 			Aircraft* aircraft = m_world.GetAircraft(aircraft_identifier);
 			bool is_local_plane = std::find(m_local_player_identifiers.begin(), m_local_player_identifiers.end(), aircraft_identifier) != m_local_player_identifiers.end();
@@ -525,6 +528,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 				aircraft->setPosition(interpolated_position);
 				aircraft->SetHitpoints(hitpoints);
 				aircraft->SetMissileAmmo(ammo);
+				aircraft->setRotation(rotation);
 			}
 		}
 	}

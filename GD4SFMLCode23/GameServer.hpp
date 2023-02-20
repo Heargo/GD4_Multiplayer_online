@@ -35,6 +35,7 @@ private:
 		sf::Vector2f m_position;
 		sf::Int32 m_hitpoints;
 		sf::Int32 m_missile_ammo;
+		float m_rotation;
 		std::map<sf::Int32, bool> m_realtime_actions;
 	};
 

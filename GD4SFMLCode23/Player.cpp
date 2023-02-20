@@ -79,6 +79,8 @@ void Player::HandleEvent(const sf::Event& event, CommandQueue& commands)
         Action action;
         if (m_key_binding && m_key_binding->CheckAction(event.key.code, action) && !IsRealtimeAction(action))
         {
+            std::cout << "Player " << m_identifier << " " << static_cast<sf::Int32>(action) << std::endl;
+
             // Network connected -> send event over network
             if (m_socket)
             {
@@ -117,6 +119,7 @@ void Player::HandleEvent(const sf::Event& event, CommandQueue& commands)
 	if (event.type == sf::Event::MouseButtonPressed)
 	{
 		Action action;
+
 		if (m_key_binding && m_key_binding->CheckAction(event.mouseButton.button, action) && !IsRealtimeAction(action))
 		{
 			// Network connected -> send event over network
@@ -127,6 +130,8 @@ void Player::HandleEvent(const sf::Event& event, CommandQueue& commands)
 				packet << m_identifier;
 				packet << static_cast<sf::Int32>(action);
 				m_socket->send(packet);
+                
+
 			}
 
 			// Network disconnected -> local event
@@ -134,6 +139,23 @@ void Player::HandleEvent(const sf::Event& event, CommandQueue& commands)
 			{
 				commands.Push(m_action_binding[action]);
 			}
+		}
+	}
+    
+	//realtime change (network connected) for mouse
+	if ((event.type == sf::Event::MouseButtonPressed || event.type == sf::Event::MouseButtonReleased) && m_socket)
+	{
+		Action action;
+		if (m_key_binding && m_key_binding->CheckAction(event.mouseButton.button, action) && IsRealtimeAction(action))
+		{
+			// Send realtime change over network
+			sf::Packet packet;
+			packet << static_cast<sf::Int32>(Client::PacketType::kPlayerRealtimeChange);
+			packet << m_identifier;
+			packet << static_cast<sf::Int32>(action);
+			packet << (event.type == sf::Event::MouseButtonPressed);
+			m_socket->send(packet);
+            std::cout << "Player " << m_identifier << " " << static_cast<sf::Int32>(action) << std::endl;
 		}
 	}
 }
