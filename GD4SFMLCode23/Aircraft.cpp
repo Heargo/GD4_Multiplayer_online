@@ -268,12 +268,12 @@ void Aircraft::CreateBullet(SceneNode& node, const TextureHolder& textures) cons
 
 void Aircraft::CreateProjectile(SceneNode& node, ProjectileType type, sf::Vector2f bulletPosition, const TextureHolder& textures) const
 {
-	std::unique_ptr<Projectile> projectile(new Projectile(type, textures));
+	std::unique_ptr<Projectile> projectile(new Projectile(type, textures,m_identifier));
 	//set the velocity of the bullet depending on the rotation of the aircraft
 	float rotation = getRotation();
 	sf::Vector2f velocity = sf::Vector2f(std::sin(rotation * 3.14159265 / 180), -std::cos(rotation * 3.14159265 / 180));
 	velocity = velocity * 800.f;
-	std::cout << "velocity is (" << velocity.x << "," << velocity.y <<")" << std::endl;
+	//std::cout << "velocity is (" << velocity.x << "," << velocity.y <<")" << std::endl;
 	projectile->SetVelocity(velocity);
 
 	projectile->setPosition(bulletPosition);

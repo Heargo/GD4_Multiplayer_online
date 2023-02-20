@@ -10,9 +10,10 @@ namespace
 	const std::vector<ProjectileData> Table = InitializeProjectileData();
 }
 
-Projectile::Projectile(ProjectileType type, const TextureHolder& textures)
+Projectile::Projectile(ProjectileType type, const TextureHolder& textures, int owner_identifier)
 	: Entity(1)
 	, m_type(type)
+	, m_owner_identifier(owner_identifier)
 	, m_sprite(textures.Get(Table[static_cast<int>(type)].m_texture), Table[static_cast<int>(type)].m_texture_rect)
 {
 	Utility::CentreOrigin(m_sprite);
@@ -65,6 +66,11 @@ float Projectile::GetMaxSpeed() const
 int Projectile::GetDamage() const
 {
 	return Table[static_cast<int>(m_type)].m_damage;
+}
+
+int Projectile::GetOwnerIdentifier() const
+{
+	return m_owner_identifier;
 }
 
 void Projectile::UpdateCurrent(sf::Time dt, CommandQueue& commands)

@@ -7,7 +7,7 @@
 class Projectile : public Entity
 {
 public:
-	Projectile(ProjectileType type, const TextureHolder& textures);
+	Projectile(ProjectileType type, const TextureHolder& textures, int owner_identifier);
 	void GuideTowards(sf::Vector2f position);
 	bool IsGuided() const;
 
@@ -15,6 +15,7 @@ public:
 	sf::FloatRect GetBoundingRect() const override;
 	float GetMaxSpeed() const;
 	int GetDamage() const;
+	int GetOwnerIdentifier() const;
 
 private:
 	virtual void UpdateCurrent(sf::Time dt, CommandQueue& commands) override;
@@ -24,5 +25,6 @@ private:
 	ProjectileType m_type;
 	sf::Sprite m_sprite;
 	sf::Vector2f m_target_direction;
+	int m_owner_identifier;
 };
 
