@@ -31,6 +31,7 @@ namespace Client
 		kRequestCoopPartner,
 		kPositionUpdate,
 		kGameEvent,
+		kRespawn,
 		kQuit
 	};
 }

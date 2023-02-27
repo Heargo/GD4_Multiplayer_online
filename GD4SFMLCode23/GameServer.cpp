@@ -159,27 +159,27 @@ void GameServer::Tick()
 {
 	UpdateClientState();
 
-	//Check if the game is over = all planes position.y < offset
-	bool all_aircraft_done = true;
-	for (const auto& current : m_aircraft_info)
-	{
-		//As long one player has not crossed the finish line game on
-		if (current.second.m_position.y > 0.f)
-		{
-			all_aircraft_done = false;
-			break;
-		}
-	}
+	////Check if the game is over = all planes position.y < offset
+	//bool all_aircraft_done = true;
+	//for (const auto& current : m_aircraft_info)
+	//{
+	//	//As long one player has not crossed the finish line game on
+	//	if (current.second.m_position.y > 0.f)
+	//	{
+	//		all_aircraft_done = false;
+	//		break;
+	//	}
+	//}
 
-	if (all_aircraft_done)
-	{
-		sf::Packet mission_success_packet;
-		mission_success_packet << static_cast<sf::Int32>(Server::PacketType::kMissionSuccess);
-		SendToAll(mission_success_packet);
-	}
+	//if (all_aircraft_done)
+	//{
+	//	sf::Packet mission_success_packet;
+	//	mission_success_packet << static_cast<sf::Int32>(Server::PacketType::kMissionSuccess);
+	//	SendToAll(mission_success_packet);
+	//}
 
 	//Remove aircraft that have been destroyed
-	for (auto itr = m_aircraft_info.begin(); itr != m_aircraft_info.end();)
+	/*for (auto itr = m_aircraft_info.begin(); itr != m_aircraft_info.end();)
 	{
 		if (itr->second.m_hitpoints <= 0)
 		{
@@ -189,7 +189,7 @@ void GameServer::Tick()
 		{
 			++itr;
 		}
-	}
+	}*/
 
 	//Check if it is time to spawn enemies
 	if (Now() >= m_time_for_next_spawn + m_last_spawn_time)
@@ -336,6 +336,29 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 		}
 
 		m_aircraft_identifer_counter++;
+	}
+	break;
+	case Client::PacketType::kRespawn:
+	{
+		sf::Int32 aircraft_identifier;
+		packet >> aircraft_identifier;
+		
+		std::cout << "Respawn player "<< aircraft_identifier << std::endl;
+		// Tell everyone else about the respawn (same as connect)
+		sf::Packet notify_packet;
+		notify_packet << static_cast<sf::Int32>(Server::PacketType::kPlayerConnect);
+		notify_packet << aircraft_identifier;
+		notify_packet << m_aircraft_info[aircraft_identifier].m_position.x;
+		notify_packet << m_aircraft_info[aircraft_identifier].m_position.y;
+
+		for (PeerPtr& peer : m_peers)
+		{
+			if (peer.get() != &receiving_peer && peer->m_ready)
+			{
+
+				peer->m_socket.send(notify_packet);
+			}
+		}
 	}
 	break;
 

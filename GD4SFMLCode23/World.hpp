@@ -1,4 +1,5 @@
 #pragma once
+#include "State.hpp"
 #include "ResourceHolder.hpp"
 #include "ResourceIdentifiers.hpp"
 #include "SceneNode.hpp"
@@ -24,10 +25,12 @@
 
 
 
+
+
 class World : private sf::NonCopyable
 {
 public:
-	explicit World(sf::RenderTarget& window, FontHolder& font, SoundPlayer& sounds, bool networked=false);
+	explicit World(sf::RenderTarget& window, FontHolder& font, SoundPlayer& sounds, State::Context context, bool networked=false);
 	void Update(sf::Time dt);
 	void Draw();
 
@@ -111,5 +114,6 @@ private:
 	SpriteNode* m_finish_sprite;
 
 	std::vector<sf::Int32> m_local_player_identifiers;
+	State::Context m_context;
 };
 

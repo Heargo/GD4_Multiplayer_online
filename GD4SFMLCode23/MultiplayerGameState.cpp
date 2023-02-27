@@ -32,7 +32,7 @@ sf::IpAddress GetAddressFromFile()
 
 MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, bool is_host)
 	:State(stack, context)
-	, m_world(*context.window, *context.fonts, *context.sounds, true)
+	, m_world(*context.window, *context.fonts, *context.sounds, context, true)
 	, m_window(*context.window)
 	, m_texture_holder(*context.textures)
 	, m_connected(false)
@@ -43,6 +43,7 @@ MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, b
 	, m_game_started(false)
 	, m_client_timeout(sf::seconds(2.f))
 	, m_time_since_last_packet(sf::seconds(0.f))
+	, m_context(context)
 {
 	m_broadcast_text.setFont(context.fonts->Get(Font::kMain));
 	m_broadcast_text.setPosition(1024.f/2, 100.f);
@@ -95,6 +96,9 @@ MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, b
 	
 	//Play the game music
 	context.music->Play(MusicThemes::kMissionTheme);	
+
+	//add socke to context 
+	m_context.socket = &m_socket;
 }
 
 void MultiplayerGameState::Draw()
@@ -131,33 +135,36 @@ bool MultiplayerGameState::Update(sf::Time dt)
 
 		//Remove players whose aircraft were destroyed
 		bool found_local_plane = false;
+		bool local_plane_destroyed = false;
 		for (auto itr = m_players.begin(); itr != m_players.end();)
 		{
 			//Check if there are no more local planes for remote clients
 			if (std::find(m_local_player_identifiers.begin(), m_local_player_identifiers.end(), itr->first) != m_local_player_identifiers.end())
 			{
 				found_local_plane = true;
+				if (m_world.GetAircraft(itr->first) && m_world.GetAircraft(itr->first)->IsMarkedForRemoval())
+				{
+					local_plane_destroyed = true;
+				}
 			}
 
 			if (!m_world.GetAircraft(itr->first))
 			{
 				itr = m_players.erase(itr);
-
-				//No more players left : Mission failed
-				if (m_players.empty())
-				{
-					RequestStackPush(StateID::kGameOver);
-				}
 			}
 			else
 			{
 				++itr;
 			}
 		}
-
-		if (!found_local_plane && m_game_started)
+		
+		if (local_plane_destroyed && m_game_started)
 		{
-			RequestStackPush(StateID::kGameOver);
+			
+			m_context.playerID = m_local_player_identifiers[0];
+			//log 
+			std::cout << "Local plane destroyed, pushing game over state" << std::endl;
+			RequestStackPush(StateID::kNetworkGameOver);
 		}
 
 		//Only handle the realtime input if the window has focus and the game is unpaused
@@ -382,10 +389,13 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		sf::Int32 aircraft_identifier;
 		sf::Vector2f aircraft_position;
 		packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y;
-
-		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier,false);
+		//if indentifier in local player identifiers, then this is a local player
+		bool is_local = std::find(m_local_player_identifiers.begin(), m_local_player_identifiers.end(), aircraft_identifier) != m_local_player_identifiers.end();
+		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier, is_local);
 		aircraft->setPosition(aircraft_position);
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, nullptr));
+		
+		std::cout << "Player " << aircraft_identifier << " connected" << std::endl;
 	}
 	break;
 

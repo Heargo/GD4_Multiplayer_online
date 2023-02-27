@@ -235,9 +235,7 @@ void Aircraft::LaunchMissile()
 
 void Aircraft::CreateBullet(SceneNode& node, const TextureHolder& textures) const
 {
-	ProjectileType type = IsAllied() ? ProjectileType::kAlliedBullet : ProjectileType::kEnemyBullet;
-	//TODO make the bullet allied for local player only
-	
+	ProjectileType type = IsAllied() ? ProjectileType::kAlliedBullet : ProjectileType::kEnemyBullet;	
 	//get the position of the bullet depending on the rotation of the aircraft
 	float rotation = getRotation();
 	float offset = 50.f;

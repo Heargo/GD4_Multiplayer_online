@@ -10,7 +10,7 @@
 #include <limits>
 #include <SFML/Window/Mouse.hpp>
 
-World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sounds, bool networked)
+World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sounds, State::Context context, bool networked)
 	:m_target(output_target)
 	,m_camera(output_target.getDefaultView())
 	,m_textures()
@@ -28,6 +28,7 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_networked_world(networked)
 	,m_network_node(nullptr)
 	,m_finish_sprite(nullptr)
+	,m_context(context)
 {
 	m_scene_texture.create(m_target.getSize().x, m_target.getSize().y);
 	LoadTextures();
@@ -44,9 +45,6 @@ void World::SetWorldScrollCompensation(float compensation)
 void World::Update(sf::Time dt)
 {
 	//stick camera to local player
-	//TODO
-	//m_camera.setCenter(m_player_1->getPosition());
-	
 	for (Aircraft* a : m_player_aircraft)
 	{
 		a->ApplyFriction();
@@ -132,6 +130,8 @@ Aircraft* World::AddAircraft(int identifier,bool isLocalPlayer)
 
 	if(isLocalPlayer)
 		m_local_player_identifiers.push_back(identifier);
+	
+	std::cout << "Player " << identifier << " spawned" << std::endl;
 	
 	return m_player_aircraft.back();
 }
@@ -480,12 +480,13 @@ void World::HandleCollisions()
 			player.PlayLocalSound(m_command_queue, SoundEffect::kCollectPickup);
 		}
 		else if (MatchesCategories(pair, ReceiverCategories::kPlayerAircraft, ReceiverCategories::kAlliedProjectile)
-			&& static_cast<Projectile&>(*pair.second).GetOwnerIdentifier() != static_cast<Aircraft&>(*pair.first).GetIdentifier())
+			&& static_cast<Projectile&>(*pair.second).GetOwnerIdentifier() == static_cast<Aircraft&>(*pair.first).GetIdentifier())
 		{
 			auto& aircraft = static_cast<Aircraft&>(*pair.first);
 			auto& projectile = static_cast<Projectile&>(*pair.second);
 			//Collision Response
 			aircraft.Damage(projectile.GetDamage());
+			m_context.lastHit = projectile.GetOwnerIdentifier();
 			projectile.Destroy();
 		}
 	}

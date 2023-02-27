@@ -7,6 +7,7 @@
 #include "SettingsState.hpp"
 #include "GameOverState.hpp"
 #include "MultiplayerGameState.hpp"
+#include "NetworkGameOverState.hpp"
 
 const sf::Time Application::kTimePerFrame = sf::seconds(1.f / 60.f);
 
@@ -83,6 +84,7 @@ void Application::RegisterStates()
 	m_stack.RegisterState<MultiplayerGameState>(StateID::kJoinGame, false);
 	m_stack.RegisterState<PauseState>(StateID::kPause);
 	m_stack.RegisterState<PauseState>(StateID::kNetworkPause, true);
+	m_stack.RegisterState<NetworkGameOverState>(StateID::kNetworkGameOver, true);
 	m_stack.RegisterState<SettingsState>(StateID::kSettings);
 	m_stack.RegisterState<GameOverState>(StateID::kGameOver, "Mission Failed!");
 	m_stack.RegisterState<GameOverState>(StateID::kMissionSuccess, "Mission Successful!");

@@ -6,6 +6,7 @@
 
 #include <SFML/System/Time.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Network/Packet.hpp>
 
 #include <memory>
 
@@ -34,6 +35,9 @@ public:
 		SoundPlayer* sounds;
 		KeyBinding* keys1;
 		KeyBinding* keys2;
+		sf::Int32 playerID;
+		int lastHit;
+		sf::TcpSocket* socket;
 	};
 
 public:
@@ -51,10 +55,10 @@ protected:
 	void RequestStackClear();
 
 	Context GetContext() const;
+	Context m_context;
 
 private:
 	StateStack* m_stack;
-	Context m_context;
 
 
 };
