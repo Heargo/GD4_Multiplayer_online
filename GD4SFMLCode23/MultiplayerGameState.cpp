@@ -148,14 +148,14 @@ bool MultiplayerGameState::Update(sf::Time dt)
 				}
 			}
 
-			if (!m_world.GetAircraft(itr->first))
+			/*if (!m_world.GetAircraft(itr->first))
 			{
 				itr = m_players.erase(itr);
 			}
 			else
-			{
-				++itr;
-			}
+			{*/
+			++itr;
+			//}
 		}
 		
 		if (local_plane_destroyed && m_game_started)
