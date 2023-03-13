@@ -100,4 +100,3 @@ std::vector<ParticleData> InitializeParticleData()
     return data;
 }
 
-

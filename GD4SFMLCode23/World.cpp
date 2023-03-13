@@ -9,6 +9,7 @@
 #include <iostream>
 #include <limits>
 #include <SFML/Window/Mouse.hpp>
+#include "Asteroid.hpp"
 
 World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sounds, State::Context context, bool networked)
 	:m_target(output_target)
@@ -30,6 +31,10 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_finish_sprite(nullptr)
 	,m_context(context)
 {
+	//center spawn position
+	m_spawn_position.x = m_world_bounds.width / 2.f;
+	m_spawn_position.y = m_world_bounds.height / 2.f;
+	
 	m_scene_texture.create(m_target.getSize().x, m_target.getSize().y);
 	LoadTextures();
 	BuildScene();
@@ -191,6 +196,7 @@ void World::LoadTextures()
 	m_textures.Load(Texture::kSpace, "Media/Textures/greenNebula.png");
 	m_textures.Load(Texture::kExplosion, "Media/Textures/Explosion.png");
 	m_textures.Load(Texture::kParticle, "Media/Textures/Particle.png");
+	m_textures.Load(Texture::kAsteroid, "Media/Textures/asteroid.png");
 
 	//print "ok" in console
 	std::cout << "ok" << std::endl;
@@ -251,7 +257,10 @@ void World::BuildScene()
 		m_scenegraph.AttachChild(std::move(network_node));
 	}
 
-	AddEnemies();
+	//AddEnemies();
+
+	//create the asteroid field
+	SpawnAsteroides(30);
 }
 
 void World::AdaptPlayerPosition()
@@ -489,6 +498,38 @@ void World::HandleCollisions()
 			m_context.lastHit = projectile.GetOwnerIdentifier();
 			projectile.Destroy();
 		}
+		//collision with asteroid
+		else if (MatchesCategories(pair, ReceiverCategories::kPlayerAircraft, ReceiverCategories::kAsteroid))
+		{
+			std::cout << "collision with asteroid" << std::endl;
+			auto& aircraft = static_cast<Aircraft&>(*pair.first);
+			auto& asteroid = static_cast<Asteroid&>(*pair.second);
+			float distance = Distance(aircraft, asteroid);
+			if (!aircraft.IsDestroyed() && distance <= asteroid.GetRadius())
+			{
+
+				//calculate and apply damage to inflict to player depending on player velocity
+				float velocityFactor = 1.5 * (abs(aircraft.GetVelocity().x) + abs(aircraft.GetVelocity().y));
+				float sizeFactor = 0.1 * asteroid.GetRadius();
+				float damageToApply = 0.005 * velocityFactor * sizeFactor;
+				int damageToAsteroid = damageToApply / 4;
+				//asteroid.Damage(damageToAsteroid);
+				//std::cout << "dmg for player :" << damageToApply << std::endl;
+				//std::cout << "dmg for asteroid :" << damageToApply / 4 << std::endl;
+
+				aircraft.Damage(damageToApply);
+
+				//move the aircraft back 5 px in the opposite direction of normalized velocity
+				sf::Vector2f moveBack = aircraft.GetVelocity();
+				moveBack.x = moveBack.x / sqrt(pow(moveBack.x, 2) + pow(moveBack.y, 2)) * 5;
+				moveBack.y = moveBack.y / sqrt(pow(moveBack.x, 2) + pow(moveBack.y, 2)) * 5;
+
+				aircraft.setPosition(aircraft.getPosition() - moveBack);
+
+				//apply bounced velocity
+				aircraft.SetVelocity(aircraft.GetVelocity().x * -1, aircraft.GetVelocity().y * -1);
+			}
+		}
 	}
 }
 
@@ -520,4 +561,86 @@ void World::UpdateSounds()
 	m_sounds.RemoveStoppedSounds();
 }
 
+void World::SpawnAsteroides(int nbAsteroides)
+{
+	//hardcoded seed for now 
+	srand(1);
 
+	//list of existing asteroides position and size
+	std::vector<sf::Vector2f> existingAsteroides;
+	std::vector<int> existingAsteroidesSize;
+
+	//Spawn the asteroids
+	for (int i = 0; i < nbAsteroides; i++)
+	{
+		//get a random size between 50px and 200px with a step of 50px
+		int size = 50 * (rand() % 4 + 1);
+
+		sf::Vector2f pos = GetRandomPosition(size, existingAsteroides, existingAsteroidesSize);
+
+		//skip if there is no valid position for this size. Get random position return a (0,0) if there where to many attemps 
+		if (pos == sf::Vector2f(0.f, 0.f)) continue;
+
+		//add pos and size to history
+		existingAsteroides.push_back(pos);
+		existingAsteroidesSize.push_back(size);
+
+		//create it and add it to the scene
+		std::unique_ptr<Asteroid> asteroid(new Asteroid(size, m_textures));
+		asteroid->setPosition(pos);
+		//asteroid->sceneNodeName = "Asteroid " + std::to_string(i);
+		m_scene_layers[static_cast<int>(Layers::kUpperAir)]->AttachChild(std::move(asteroid));
+
+		std::cout << "Asteroid " << i << " created at " << pos.x << " " << pos.y << " with size " << size << std::endl;
+	}
+}
+
+sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existingAsteroides, std::vector<int> existingAsteroidesSize)
+{
+
+	bool tooClose = false;
+	//margin in px
+	int margin = 30;
+
+	//position is within word size
+	int marginWorld = 50;
+	int xRange = (m_world_bounds.width / 2.f) - marginWorld;
+	int yRange = (m_world_bounds.height / 2.f) - marginWorld;
+	//std::cout << "xRange " << xRange << " yRange " << yRange << std::endl;
+	float x = (rand() % (2 * xRange) - xRange) + m_spawn_position.x;
+	float y = (rand() % (2 * yRange) - yRange) + m_spawn_position.x;
+
+	int attemps = 0;
+
+	//while the position is too close from an existing asteriod, we try other position within 10 attemps limit.
+	do {
+		for (int j = 0; j < existingAsteroides.size(); j++)
+		{
+			float distance = std::sqrt((existingAsteroides[j].x - x) * (existingAsteroides[j].x - x) + (existingAsteroides[j].y - y) * (existingAsteroides[j].y - y));
+			if (distance <= existingAsteroidesSize[j] + size + margin)
+			{
+				tooClose = true;
+				x = (rand() % (2 * xRange) - xRange) + m_spawn_position.x;
+				y = (rand() % (2 * yRange) - yRange) + m_spawn_position.x;
+				break;
+			}
+			else
+			{
+				tooClose = false;
+			}
+		}
+		attemps++;
+	} while (tooClose && attemps < 10);
+
+	//return (0,0) position if there is no room for the asteroid of the size given.
+	if (attemps == 10)
+	{
+		x = 0.f;
+		y = 0.f;
+	}
+
+	return sf::Vector2f(x, y);
+
+
+
+}

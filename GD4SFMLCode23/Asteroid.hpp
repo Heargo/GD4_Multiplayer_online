@@ -18,6 +18,7 @@ public:
 	Asteroid(int size, const TextureHolder& textures);
 	unsigned int GetCategory() const override;
 	int GetRadius();
+	sf::FloatRect GetBoundingRect() const override;
 
 private:
 	float m_size;

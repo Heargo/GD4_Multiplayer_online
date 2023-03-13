@@ -55,6 +55,8 @@ public:
 	bool PollGameAction(GameActions::Action& out);
 
 	bool IsLocalPlayer(int identifier);
+	
+	void SpawnAsteroides(int nbAsteroides);
 
 	
 
@@ -74,6 +76,8 @@ private:
 	void HandleCollisions();
 
 	void UpdateSounds();
+
+	sf::Vector2f GetRandomPosition(int size, std::vector<sf::Vector2f> existingAsteroides, std::vector<int> existingAsteroidesSize);
 
 private:
 	struct SpawnPoint

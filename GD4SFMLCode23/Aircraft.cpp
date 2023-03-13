@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
 
 namespace
 {
@@ -180,7 +181,7 @@ void Aircraft::UpdateTexts()
 		}
 		else
 		{
-			m_missile_display->SetString("M: " + std::to_string(m_missile_ammo));
+			m_missile_display->SetString("M: " + std::to_string(GetWorldPosition().x)+"," + std::to_string(GetWorldPosition().y));
 		}
 	}
 }
@@ -282,7 +283,17 @@ void Aircraft::CreateProjectile(SceneNode& node, ProjectileType type, sf::Vector
 
 sf::FloatRect Aircraft::GetBoundingRect() const
 {
-	return GetWorldTransform().transformRect(m_sprite.getGlobalBounds());
+	sf::FloatRect bounds = GetWorldTransform().transformRect(m_sprite.getGlobalBounds());
+	
+	//limit heigh and width of the bounding box to avoid rotation issues
+	bounds.width = std::min(bounds.width, 40.f);
+	bounds.height = std::min(bounds.height, 40.f);
+	//std::cout << "bounds" << bounds.top << " " << bounds.left << " " << bounds.width << " " << bounds.height << std::endl;
+	//center the bounding box around the sprite
+	bounds.left = GetWorldPosition().x - bounds.width / 2.f;
+	bounds.top = GetWorldPosition().y - bounds.height / 2.f;
+	
+	return bounds;
 }
 
 bool Aircraft::IsMarkedForRemoval() const
@@ -317,6 +328,11 @@ void Aircraft::DrawCurrent(sf::RenderTarget& target, sf::RenderStates states) co
 	}
 	else
 	{
+		/*sf::FloatRect bounds = GetBoundingRect();
+		sf::RectangleShape rectangle(sf::Vector2f(bounds.width, bounds.height));
+		rectangle.setFillColor(sf::Color::Red);
+		rectangle.setPosition(bounds.left, bounds.top);
+		target.draw(rectangle);*/
 		target.draw(m_sprite, states);
 	}
 }

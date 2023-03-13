@@ -459,6 +459,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		{
 			//log player id with action name
 			std::cout << "Player " << aircraft_identifier << " " << action << std::endl;
+			//log player position
 			itr->second->HandleNetworkEvent(static_cast<Action>(action), m_world.GetCommandQueue());
 		}
 	}
