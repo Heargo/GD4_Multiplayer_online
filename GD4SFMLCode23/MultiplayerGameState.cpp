@@ -115,10 +115,10 @@ void MultiplayerGameState::Draw()
 			m_window.draw(m_broadcast_text);
 		}
 		
-		if (m_local_player_identifiers.size() < 2 && m_player_invitation_time < sf::seconds(0.5f))
+		/*if (m_local_player_identifiers.size() < 2 && m_player_invitation_time < sf::seconds(0.5f))
 		{
 			m_window.draw(m_player_invitation_text);
-		}
+		}*/
 	}
 	else
 	{
@@ -275,14 +275,14 @@ bool MultiplayerGameState::HandleEvent(const sf::Event& event)
 	if (event.type == sf::Event::KeyPressed)
 	{
 		//If enter pressed, add second player co-op only if there is only 1 player
-		if (event.key.code == sf::Keyboard::Return && m_local_player_identifiers.size() == 1)
+		/*if (event.key.code == sf::Keyboard::Return && m_local_player_identifiers.size() == 1)
 		{
 			sf::Packet packet;
 			packet << static_cast<sf::Int32>(Client::PacketType::kRequestCoopPartner);
 			m_socket.send(packet);
-		}
+		}*/
 		//If escape is pressed, show the pause screen
-		else if (event.key.code == sf::Keyboard::Escape)
+		if (event.key.code == sf::Keyboard::Escape)
 		{
 			DisableAllRealtimeActions();
 			RequestStackPush(StateID::kNetworkPause);
