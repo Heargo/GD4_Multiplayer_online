@@ -498,6 +498,19 @@ void World::HandleCollisions()
 			m_context.lastHit = projectile.GetOwnerIdentifier();
 			projectile.Destroy();
 		}
+		//collision bullet / asteroid
+		else if (MatchesCategories(pair, ReceiverCategories::kAlliedProjectile, ReceiverCategories::kAsteroid))
+		{
+			auto& projectile = static_cast<Projectile&>(*pair.first);
+			auto& asteroid = static_cast<Asteroid&>(*pair.second);
+			//Collision Response
+			float distance = Distance(projectile, asteroid);
+			if (distance <= asteroid.GetRadius())
+			{
+				projectile.Destroy();
+			}
+		}
+		
 		//collision with asteroid
 		else if (MatchesCategories(pair, ReceiverCategories::kPlayerAircraft, ReceiverCategories::kAsteroid))
 		{
