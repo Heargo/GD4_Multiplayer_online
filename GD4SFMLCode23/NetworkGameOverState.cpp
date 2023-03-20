@@ -37,6 +37,10 @@ NetworkGameOverState::NetworkGameOverState(StateStack& stack, Context context, b
 			m_socket->send(packet);
             std::cout << "request respawn to server" << std::endl;
             RequestStackPop();
+            /*
+			// do not work as the host will rejoin and so the server will be reset (all clients will be disconnected)
+            RequestStackClear();
+            RequestStackPush(StateID::kJoinGame);*/
         });
 
     auto backToMenuButton = std::make_shared<GUI::Button>(context);
