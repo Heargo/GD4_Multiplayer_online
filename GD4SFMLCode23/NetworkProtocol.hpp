@@ -12,7 +12,6 @@ namespace Server
 		kPlayerRealtimeChange,
 		kPlayerConnect,
 		kPlayerDisconnect,
-		kAcceptCoopPartner,
 		kSpawnEnemy,
 		kSpawnPickup,
 		kSpawnSelf,
@@ -29,7 +28,6 @@ namespace Client
 	{
 		kPlayerEvent,
 		kPlayerRealtimeChange,
-		kRequestCoopPartner,
 		kPositionUpdate,
 		kGameEvent,
 		kRespawn,

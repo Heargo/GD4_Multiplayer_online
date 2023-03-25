@@ -51,6 +51,7 @@ void GameServer::NotifyPlayerSpawn(sf::Int32 aircraft_identifier)
 	sf::Packet packet;
 	//First thing for every packet is what type of packet it is
 	packet << static_cast<sf::Int32>(Server::PacketType::kPlayerConnect);
+	std::cout << "Sending NotifyPlayerSpawn to all clients" << std::endl;
 	packet << aircraft_identifier << m_aircraft_info[aircraft_identifier].m_position.x << m_aircraft_info[aircraft_identifier].m_position.y;
 	for (std::size_t i = 0; i < m_connected_players; ++i)
 	{
@@ -309,51 +310,29 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 		sf::Int32 killer;
 		sf::Int32 victim;
 		packet >> killer >> victim;
-		NotifyLeaderboardUpdate(killer, victim);
-		std::cout << "kLeaderbordUpdate" << std::endl;
-	}
-
-	case Client::PacketType::kRequestCoopPartner:
-	{
-		receiving_peer.m_aircraft_identifiers.emplace_back(m_aircraft_identifer_counter);
-		m_aircraft_info[m_aircraft_identifer_counter].m_position = sf::Vector2f(m_battlefield_rect.width / 2, m_battlefield_rect.top + m_battlefield_rect.height / 2);
-		m_aircraft_info[m_aircraft_identifer_counter].m_hitpoints = 100;
-		m_aircraft_info[m_aircraft_identifer_counter].m_missile_ammo = 2;
-
-		sf::Packet request_packet;
-		request_packet << static_cast<sf::Int32>(Server::PacketType::kAcceptCoopPartner);
-		request_packet << m_aircraft_identifer_counter;
-		request_packet << m_aircraft_info[m_aircraft_identifer_counter].m_position.x;
-		request_packet << m_aircraft_info[m_aircraft_identifer_counter].m_position.y;
-
-		receiving_peer.m_socket.send(request_packet);
-		m_aircraft_count++;
-
-		// Tell everyone else about the new plane
-		sf::Packet notify_packet;
-		notify_packet << static_cast<sf::Int32>(Server::PacketType::kPlayerConnect);
-		notify_packet << m_aircraft_identifer_counter;
-		notify_packet << m_aircraft_info[m_aircraft_identifer_counter].m_position.x;
-		notify_packet << m_aircraft_info[m_aircraft_identifer_counter].m_position.y;
-
+		std::cout << "GET kLeaderbordUpdate from client" << killer<< victim << std::endl;
+		sf::Packet notif_packet;
+		notif_packet << static_cast<sf::Int32>(Server::PacketType::kLeaderbordUpdate);
+		notif_packet << killer << victim;
+		std::cout << "SENDING kLeaderbordUpdate from server to all peers" << killer << victim << std::endl;
+		
 		for (PeerPtr& peer : m_peers)
 		{
 			if (peer.get() != &receiving_peer && peer->m_ready)
 			{
 
-				peer->m_socket.send(notify_packet);
+				peer->m_socket.send(notif_packet);
 			}
 		}
-
-		m_aircraft_identifer_counter++;
 	}
 	break;
+	
 	case Client::PacketType::kRespawn:
 	{
 		sf::Int32 aircraft_identifier;
 		packet >> aircraft_identifier;
 		
-		std::cout << "Respawn player "<< aircraft_identifier << std::endl;
+		std::cout << "SERVER Respawn player "<< aircraft_identifier << std::endl;
 		// Tell everyone else about the respawn (same as connect)
 		sf::Packet notify_packet;
 		notify_packet << static_cast<sf::Int32>(Server::PacketType::kPlayerConnect);

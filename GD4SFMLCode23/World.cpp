@@ -501,17 +501,23 @@ void World::HandleCollisions()
 			//Collision Response
 			aircraft.Damage(projectile.GetDamage());
 			m_context.lastHit = projectile.GetOwnerIdentifier();
-
-			//update score to server send packet
-			sf::Packet packet;
-			packet << static_cast<sf::Int32>(Client::PacketType::kLeaderbordUpdate);
-			packet << projectile.GetOwnerIdentifier(); //the id of the killer
-			packet << aircraft.GetIdentifier(); //the id of the killed
-			
-			//send it
-			m_socket->send(packet);
-			
 			projectile.Destroy();
+
+			//update score to server send packet if aircraft is destroyed
+			if (aircraft.GetHitPoints() <= 0)
+			{
+				sf::Packet packet;
+				packet << static_cast<sf::Int32>(Client::PacketType::kLeaderbordUpdate);
+				packet << projectile.GetOwnerIdentifier(); //the id of the killer
+				packet << aircraft.GetIdentifier(); //the id of the killed
+
+				//send it
+				m_socket->send(packet);
+				std::cout << "SEND leaderboard update packet"<< projectile.GetOwnerIdentifier()<< aircraft.GetIdentifier() << std::endl;
+			}
+			//
+			
+			
 		}
 		//collision bullet / asteroid
 		else if (MatchesCategories(pair, ReceiverCategories::kAlliedProjectile, ReceiverCategories::kAsteroid))

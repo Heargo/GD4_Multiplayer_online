@@ -284,6 +284,7 @@ bool MultiplayerGameState::HandleEvent(const sf::Event& event)
 		//If enter pressed and the local plane is destroyed, send a respawn request
 		if (event.key.code == sf::Keyboard::Return && m_local_plane_destroyed)
 		{
+			std::cout << "Respawn request sent from client" << std::endl;
 			sf::Packet packet;
 			packet << static_cast<sf::Int32>(Client::PacketType::kRespawn);
 			packet << m_local_player_identifiers[0];
@@ -395,6 +396,8 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		m_local_player_identifiers.push_back(aircraft_identifier);
 		//TODO LOCAL PLAYER
 		m_game_started = true;
+		ModifyLeaderboard(aircraft_identifier, 0);
+		UpdateLeaderboardText();
 	}
 	break;
 
@@ -418,6 +421,8 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, nullptr));
 		
 		std::cout << "Player " << aircraft_identifier << " connected" << std::endl;
+		ModifyLeaderboard(aircraft_identifier, 0);
+		UpdateLeaderboardText();
 	}
 	break;
 
@@ -457,18 +462,6 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		}
 	}
 	break;
-
-	case Server::PacketType::kAcceptCoopPartner:
-	{
-		sf::Int32 aircraft_identifier;
-		packet >> aircraft_identifier;
-
-		m_world.AddAircraft(aircraft_identifier,false);
-		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, GetContext().keys2));
-		m_local_player_identifiers.emplace_back(aircraft_identifier);
-	}
-	break;
-
 	//Player event, like missile fired occurs
 	case Server::PacketType::kPlayerEvent:
 	{
@@ -513,6 +506,22 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 
 		m_world.AddEnemy(static_cast<AircraftType>(type), relative_x, height);
 		m_world.SortEnemies();
+	}
+	break;
+
+	case Server::PacketType::kLeaderbordUpdate:
+	{
+		int killer_id;
+		int victim_id;
+		packet >> killer_id  >> victim_id;
+		std::cout << "GET leaderboard update from server" << killer_id << victim_id << std::endl;
+
+		//add 1 score to killer in the leaderboard
+		ModifyLeaderboard(killer_id, 1);
+		//reset victim score
+		ModifyLeaderboard(victim_id, 0);
+
+		UpdateLeaderboardText();
 	}
 	break;
 
@@ -567,4 +576,34 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 	}
 	break;
 	}
+}
+
+void MultiplayerGameState::ModifyLeaderboard(int key, int modifier)
+{
+	// check if key exists in the map or not
+	std::map<int, int>::iterator it = m_leaderboard.find(key);
+
+	// key already present on the map
+	if (it != m_leaderboard.end()) {
+		if (modifier == 0)
+			it->second = 0;
+		else
+			it->second++;
+	}
+	// key not found
+	else {
+		m_leaderboard.insert(std::make_pair(key, modifier));
+	}
+
+}
+
+void MultiplayerGameState::UpdateLeaderboardText()
+{
+	//Update the leaderboard text
+	std::string leaderboard_text = "Leaderboard:\n";
+	for (auto& pair : m_leaderboard)
+	{
+		leaderboard_text += "Player "+ std::to_string(pair.first) + " : " + std::to_string(pair.second) + "\n";
+	}
+	m_leaderboard_text.setString(leaderboard_text);
 }

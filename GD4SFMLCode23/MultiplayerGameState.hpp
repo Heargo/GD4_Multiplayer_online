@@ -19,6 +19,8 @@ public:
 private:
 	void UpdateBroadcastMessage(sf::Time elpased_time);
 	void HandlePacket(sf::Int32 packet_type, sf::Packet& packet);
+	void ModifyLeaderboard(int key, int modifier);
+	void UpdateLeaderboardText();
 	
 private:
 	typedef std::unique_ptr<Player> PlayerPtr;
@@ -29,6 +31,7 @@ private:
 	TextureHolder& m_texture_holder;
 
 	std::map<int, PlayerPtr> m_players;
+	std::map<int, int> m_leaderboard;
 	std::vector<sf::Int32> m_local_player_identifiers;
 	sf::TcpSocket m_socket;
 	bool m_connected;
