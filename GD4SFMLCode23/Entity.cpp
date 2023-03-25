@@ -118,7 +118,7 @@ void Entity::Remove()
 void Entity::RegulatePlayerSpeed()
 {
     //limite the speed of the player
-    float maxSpeed = 200.f;
+    float maxSpeed = 350.f;
     if (abs(m_velocity.x) > maxSpeed)
     {
         m_velocity.x = maxSpeed * (m_velocity.x / abs(m_velocity.x)); //keep sign
