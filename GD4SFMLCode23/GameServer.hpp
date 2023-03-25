@@ -18,6 +18,7 @@ public:
 	void NotifyPlayerSpawn(sf::Int32 aircraft_identifer);
 	void NotifyPlayerRealtimeChange(sf::Int32 aircraft_identifer, sf::Int32 action, bool action_enabled);
 	void NotifyPlayerEvent(sf::Int32 aircraft_identifier, sf::Int32 action);
+	void NotifyLeaderboardUpdate(sf::Int32 killer_id, sf::Int32 victim_id);
 
 private:
 	struct RemotePeer

@@ -10,6 +10,8 @@
 #include <limits>
 #include <SFML/Window/Mouse.hpp>
 #include "Asteroid.hpp"
+#include "GameServer.hpp"
+
 
 World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sounds, State::Context context, bool networked)
 	:m_target(output_target)
@@ -29,7 +31,8 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_networked_world(networked)
 	,m_network_node(nullptr)
 	,m_finish_sprite(nullptr)
-	,m_context(context)
+	,m_context(context),
+	m_socket(context.socket)
 {
 	//center spawn position
 	m_spawn_position.x = m_world_bounds.width / 2.f;
@@ -496,6 +499,16 @@ void World::HandleCollisions()
 			//Collision Response
 			aircraft.Damage(projectile.GetDamage());
 			m_context.lastHit = projectile.GetOwnerIdentifier();
+
+			//update score to server send packet
+			sf::Packet packet;
+			packet << static_cast<sf::Int32>(Client::PacketType::kLeaderbordUpdate);
+			packet << projectile.GetOwnerIdentifier(); //the id of the killer
+			packet << aircraft.GetIdentifier(); //the id of the killed
+			
+			//send it
+			m_socket->send(packet);
+			
 			projectile.Destroy();
 		}
 		//collision bullet / asteroid
@@ -656,4 +669,8 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 
 
 
+}
+
+void World::SetSocket(sf::TcpSocket* socket) {
+	m_socket = socket;
 }

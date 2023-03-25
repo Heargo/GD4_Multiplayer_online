@@ -39,7 +39,7 @@ private:
 	sf::Text m_broadcast_text;
 	sf::Time m_broadcast_elapsed_time;
 
-	sf::Text m_player_invitation_text;
+	sf::Text m_leaderboard_text;
 	sf::Time m_player_invitation_time;
 
 	sf::Text m_failed_connection_text;

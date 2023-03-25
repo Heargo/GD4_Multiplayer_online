@@ -17,6 +17,7 @@ namespace Server
 		kSpawnPickup,
 		kSpawnSelf,
 		kUpdateClientState,
+		kLeaderbordUpdate,
 		kMissionSuccess
 	};
 }
@@ -32,6 +33,7 @@ namespace Client
 		kPositionUpdate,
 		kGameEvent,
 		kRespawn,
+		kLeaderbordUpdate,
 		kQuit
 	};
 }

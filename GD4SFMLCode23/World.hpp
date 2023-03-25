@@ -23,6 +23,9 @@
 #include "BloomEffect.hpp"
 #include "SoundPlayer.hpp"
 
+#include <SFML/Network/IpAddress.hpp>
+#include <SFML/Network/Packet.hpp>
+
 
 
 
@@ -57,6 +60,8 @@ public:
 	bool IsLocalPlayer(int identifier);
 	
 	void SpawnAsteroides(int nbAsteroides);
+
+	void SetSocket(sf::TcpSocket* socket);
 
 	
 
@@ -102,6 +107,7 @@ private:
 	std::array<SceneNode*, static_cast<int>(Layers::kLayerCount)> m_scene_layers;
 
 	CommandQueue m_command_queue;
+	sf::TcpSocket* m_socket;
 
 	sf::FloatRect m_world_bounds;
 	sf::Vector2f m_spawn_position;

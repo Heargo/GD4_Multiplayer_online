@@ -10,6 +10,7 @@
 #include <SFML/Network/Packet.hpp>
 
 #include "NetworkProtocol.hpp"
+#include "GameServer.hpp"
 #include <iostream>
 
 NetworkGameOverState::NetworkGameOverState(StateStack& stack, Context context, bool lets_updates_through)
@@ -21,7 +22,7 @@ NetworkGameOverState::NetworkGameOverState(StateStack& stack, Context context, b
     sf::Vector2f window_size(context.window->getSize());
 
     m_paused_text.setFont(font);
-    m_paused_text.setString("You have been killed by");
+    m_paused_text.setString("You have been killed by Player "+ std::to_string(context.lastHit));
     m_paused_text.setCharacterSize(70);
     Utility::CentreOrigin(m_paused_text);
     m_paused_text.setPosition(0.5f * window_size.x, 0.4f * window_size.y);

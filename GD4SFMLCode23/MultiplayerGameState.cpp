@@ -48,11 +48,12 @@ MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, b
 	m_broadcast_text.setFont(context.fonts->Get(Font::kMain));
 	m_broadcast_text.setPosition(1024.f/2, 100.f);
 	
-	m_player_invitation_text.setFont(context.fonts->Get(Font::kMain));
-	m_player_invitation_text.setCharacterSize(20);
-	m_player_invitation_text.setFillColor(sf::Color::White);
-	m_player_invitation_text.setString("Press Enter to spawn player 2");
-	m_player_invitation_text.setPosition(1000 - m_player_invitation_text.getLocalBounds().width, 760 - m_player_invitation_text.getLocalBounds().height);
+	m_leaderboard_text.setFont(context.fonts->Get(Font::kMain));
+	m_leaderboard_text.setCharacterSize(20);
+	m_leaderboard_text.setFillColor(sf::Color::White);
+	m_leaderboard_text.setString("LEADERBOARD");
+	//set position to top left
+	m_leaderboard_text.setPosition(10, 10);
 	
 	//Use this for "Attempt to connect" and "Failed to connect" messages
 	m_failed_connection_text.setFont(context.fonts->Get(Font::kMain));
@@ -99,6 +100,9 @@ MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, b
 
 	//add socke to context 
 	m_context.socket = &m_socket;
+
+	//add socket to the world
+	m_world.SetSocket(&m_socket);
 }
 
 void MultiplayerGameState::Draw()
@@ -115,10 +119,7 @@ void MultiplayerGameState::Draw()
 			m_window.draw(m_broadcast_text);
 		}
 		
-		/*if (m_local_player_identifiers.size() < 2 && m_player_invitation_time < sf::seconds(0.5f))
-		{
-			m_window.draw(m_player_invitation_text);
-		}*/
+		m_window.draw(m_leaderboard_text);
 	}
 	else
 	{

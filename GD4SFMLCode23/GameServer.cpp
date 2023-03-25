@@ -61,6 +61,7 @@ void GameServer::NotifyPlayerSpawn(sf::Int32 aircraft_identifier)
 	}
 }
 
+
 void GameServer::NotifyPlayerRealtimeChange(sf::Int32 aircraft_identifier, sf::Int32 action, bool action_enabled)
 {
 	sf::Packet packet;
@@ -302,6 +303,15 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 		NotifyPlayerRealtimeChange(aircraft_identifier, action, action_enabled);
 	}
 	break;
+
+	case Client::PacketType::kLeaderbordUpdate:
+	{
+		sf::Int32 killer;
+		sf::Int32 victim;
+		packet >> killer >> victim;
+		NotifyLeaderboardUpdate(killer, victim);
+		std::cout << "kLeaderbordUpdate" << std::endl;
+	}
 
 	case Client::PacketType::kRequestCoopPartner:
 	{
@@ -550,4 +560,13 @@ void GameServer::UpdateClientState()
 	}
 
 	SendToAll(update_client_state_packet);
+}
+
+void  GameServer::NotifyLeaderboardUpdate(sf::Int32 killer_id, sf::Int32 victim_id) 
+{
+	sf::Packet packet;
+	packet << static_cast<sf::Int32>(Server::PacketType::kLeaderbordUpdate);
+	packet << killer_id << victim_id;
+	SendToAll(packet);
+	
 }
