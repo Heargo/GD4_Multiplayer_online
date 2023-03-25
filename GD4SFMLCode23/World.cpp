@@ -265,7 +265,7 @@ void World::BuildScene()
 	//AddEnemies();
 
 	//create the asteroid field
-	SpawnAsteroides(80);
+	//SpawnAsteroides(80);
 }
 
 void World::AdaptPlayerPosition()
