@@ -21,7 +21,7 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_sounds(sounds)
 	,m_scenegraph()
 	,m_scene_layers()
-	,m_world_bounds(0.f, 0.f, 5000.f, 5000.f)
+	,m_world_bounds(0.f, 0.f, 3000.f, 3000.f)
 	,m_spawn_position()
 	,m_scrollspeed(-50.f)
 	,m_scrollspeed_compensation(1.f)
@@ -227,8 +227,8 @@ void World::BuildScene()
 	sf::IntRect textureRect(m_world_bounds);
 	//expand textureRect to make the background bigger than the canvas
 	int sizeIncrease = 1920;
-	textureRect.width += sizeIncrease;
-	textureRect.height += sizeIncrease;
+	textureRect.width += m_world_bounds.width+ sizeIncrease;
+	textureRect.height += m_world_bounds.height + sizeIncrease;
 	texture.setRepeated(true);
 
 	float view_height = m_camera.getSize().y;
@@ -237,7 +237,7 @@ void World::BuildScene()
 
 	//Add the background sprite to the world
 	std::unique_ptr<SpriteNode> background_sprite(new SpriteNode(texture, textureRect));
-	background_sprite->setPosition(m_world_bounds.left - sizeIncrease / 2, m_world_bounds.top - sizeIncrease / 2);
+	background_sprite->setPosition(-sizeIncrease, -sizeIncrease);// m_world_bounds.width - sizeIncrease / 2);
 	//background_sprite->sceneNodeName = "Background";
 	m_scene_layers[static_cast<int>(Layers::kBackground)]->AttachChild(std::move(background_sprite));
 
@@ -265,24 +265,23 @@ void World::BuildScene()
 	//AddEnemies();
 
 	//create the asteroid field
-	SpawnAsteroides(30);
+	SpawnAsteroides(80);
 }
 
 void World::AdaptPlayerPosition()
 {
 	//Keep the player on the sceen 
 	sf::FloatRect view_bounds = GetViewBounds();
-	sf::FloatRect world_bounds = (m_spawn_position, m_world_bounds);
 	const float border_distance = 40.f;
 	
 	for (Aircraft* aircraft : m_player_aircraft)
 	{
 		//keep player in the world
 		sf::Vector2f position = aircraft->getPosition();
-		position.x = std::max(position.x, world_bounds.left + border_distance);
-		position.x = std::min(position.x, world_bounds.left + world_bounds.width - border_distance);
-		position.y = std::max(position.y, world_bounds.top + border_distance);
-		position.y = std::min(position.y, world_bounds.top + world_bounds.height - border_distance);
+		position.x = std::max(position.x, border_distance); //left border
+		position.x = std::min(position.x, m_world_bounds.width - border_distance); //right border
+		position.y = std::max(position.y, border_distance);//top border
+		position.y = std::min(position.y, m_world_bounds.height - border_distance); //bottom border
 		aircraft->setPosition(position);
 	}
 }
@@ -313,7 +312,7 @@ sf::FloatRect World::GetBattlefieldBounds() const
 	bounds.top -= 100.f;
 	bounds.height += 100.f;
 
-	return bounds;
+	return m_world_bounds;
 }
 
 void World::SpawnEnemies()
@@ -535,7 +534,6 @@ void World::HandleCollisions()
 		//collision with asteroid
 		else if (MatchesCategories(pair, ReceiverCategories::kPlayerAircraft, ReceiverCategories::kAsteroid))
 		{
-			std::cout << "collision with asteroid" << std::endl;
 			auto& aircraft = static_cast<Aircraft&>(*pair.first);
 			auto& asteroid = static_cast<Asteroid&>(*pair.second);
 			float distance = Distance(aircraft, asteroid);
@@ -638,11 +636,14 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 
 	//position is within word size
 	int marginWorld = 50;
-	int xRange = (m_world_bounds.width / 2.f) - marginWorld;
-	int yRange = (m_world_bounds.height / 2.f) - marginWorld;
-	//std::cout << "xRange " << xRange << " yRange " << yRange << std::endl;
-	float x = (rand() % (2 * xRange) - xRange) + m_spawn_position.x;
-	float y = (rand() % (2 * yRange) - yRange) + m_spawn_position.x;
+	//random x between margin world and world size - margin world
+	//int xRange = m_world_bounds.width - 2 * marginWorld;
+	//int yRange = m_world_bounds.height - 2 * marginWorld;
+	
+	//random position
+	int x = (rand() % int(m_world_bounds.width - margin)) + margin;
+	int y = ((rand() % int(m_world_bounds.height - margin)) + margin);
+
 
 	int attemps = 0;
 
@@ -654,8 +655,8 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 			if (distance <= existingAsteroidesSize[j] + size + margin)
 			{
 				tooClose = true;
-				x = (rand() % (2 * xRange) - xRange) + m_spawn_position.x;
-				y = (rand() % (2 * yRange) - yRange) + m_spawn_position.x;
+				x = (rand() % int(m_world_bounds.width - margin)) + margin;
+				y = ((rand() % int(m_world_bounds.height - margin)) + margin);
 				break;
 			}
 			else

@@ -23,7 +23,7 @@ GameServer::GameServer(sf::Vector2f battlefield_size)
 	, m_client_timeout(sf::seconds(1.f))
 	, m_max_connected_players(15)
 	, m_connected_players(0)
-	, m_world_height(5000.f)
+	, m_world_height(3000)
 	, m_battlefield_rect(0.f, m_world_height - battlefield_size.y, battlefield_size.x, battlefield_size.y)
 	, m_battlefield_scrollspeed(-50.f)
 	, m_aircraft_count(0)
@@ -330,9 +330,14 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 	case Client::PacketType::kRespawn:
 	{
 		sf::Int32 aircraft_identifier;
+		sf::Vector2f respawn_position;
 		packet >> aircraft_identifier;
-		
+		packet >> respawn_position.x >> respawn_position.y;
 		std::cout << "SERVER Respawn player "<< aircraft_identifier << std::endl;
+
+		// Update the aircraft info
+		m_aircraft_info[aircraft_identifier].m_position = respawn_position;
+		m_aircraft_info[aircraft_identifier].m_hitpoints = 100;
 		// Tell everyone else about the respawn (same as connect)
 		sf::Packet notify_packet;
 		notify_packet << static_cast<sf::Int32>(Server::PacketType::kPlayerConnect);

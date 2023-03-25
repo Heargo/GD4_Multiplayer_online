@@ -285,15 +285,16 @@ bool MultiplayerGameState::HandleEvent(const sf::Event& event)
 		if (event.key.code == sf::Keyboard::Return && m_local_plane_destroyed)
 		{
 			std::cout << "Respawn request sent from client" << std::endl;
+			sf::Vector2f respawn_position = m_world.validRespawnPosition();
 			sf::Packet packet;
 			packet << static_cast<sf::Int32>(Client::PacketType::kRespawn);
 			packet << m_local_player_identifiers[0];
+			packet << respawn_position.x << respawn_position.y;
 			m_socket.send(packet);
 
 			//respawn player
 			m_local_plane_destroyed = false;
 			Aircraft* aircraft = m_world.AddAircraft(m_local_player_identifiers[0],true);
-			sf::Vector2f respawn_position = m_world.validRespawnPosition();
 			aircraft->setPosition(respawn_position.x, respawn_position.y);
 		}
 		//If escape is pressed, show the pause screen
@@ -301,6 +302,16 @@ bool MultiplayerGameState::HandleEvent(const sf::Event& event)
 		{
 			DisableAllRealtimeActions();
 			RequestStackPush(StateID::kNetworkPause);
+		}
+		//if F1 is pressed, print in console the list of players and the identifier
+		if (event.key.code == sf::Keyboard::F1)
+		{
+			std::cout << "List of players: " << std::endl;
+			for (auto& pair : m_players)
+			{
+				Aircraft* aircraft = m_world.GetAircraft(pair.first);
+				std::cout << "Player " << aircraft->GetIdentifier() << std::endl;
+			}
 		}
 	}
 	else if (event.type == sf::Event::GainedFocus)

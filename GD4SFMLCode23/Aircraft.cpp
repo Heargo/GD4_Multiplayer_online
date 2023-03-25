@@ -174,7 +174,7 @@ void Aircraft::UpdateTexts()
 	m_health_display->setPosition(0.f, 50.f);
 	m_health_display->setRotation(-getRotation());
 
-	/*if (m_missile_display)
+	if (m_missile_display)
 	{
 		if (m_missile_ammo == 0)
 		{
@@ -182,12 +182,12 @@ void Aircraft::UpdateTexts()
 		}
 		else
 		{
-			std::string playerName = "player " + std::to_string(m_identifier);
-			m_missile_display->SetString(playerName);
-			m_health_display->setPosition(0.f, -50.f);
-			m_missile_display->setRotation(-getRotation());
+			std::string str = "pos " + std::to_string(GetWorldPosition().x) + " " + std::to_string(GetWorldPosition().y) + "\n";
+			m_missile_display->SetString(str);
+			m_health_display->setPosition(0.f, 100.f);
+			m_health_display->setRotation(-getRotation());
 		}
-	}*/
+	}
 }
 
 void Aircraft::UpdateMovementPattern(sf::Time dt)
