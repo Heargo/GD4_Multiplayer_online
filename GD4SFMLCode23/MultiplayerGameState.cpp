@@ -444,6 +444,10 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		packet >> aircraft_identifier;
 		m_world.RemoveAircraft(aircraft_identifier);
 		m_players.erase(aircraft_identifier);
+
+		//delete from leader board
+		m_leaderboard.erase(aircraft_identifier);
+		UpdateLeaderboardText();
 	}
 	break;
 
