@@ -40,6 +40,7 @@ private:
 	sf::Time m_broadcast_elapsed_time;
 
 	sf::Text m_leaderboard_text;
+	sf::Text m_respawn_text;
 	sf::Time m_player_invitation_time;
 
 	sf::Text m_failed_connection_text;
@@ -51,6 +52,8 @@ private:
 	bool m_game_started;
 	sf::Time m_client_timeout;
 	sf::Time m_time_since_last_packet;
+
+	bool m_local_plane_destroyed;
 
 	Context m_context;
 };

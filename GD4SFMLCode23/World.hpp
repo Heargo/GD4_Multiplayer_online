@@ -63,6 +63,8 @@ public:
 
 	void SetSocket(sf::TcpSocket* socket);
 
+	sf::Vector2f validRespawnPosition();
+
 	
 
 private:
@@ -125,5 +127,8 @@ private:
 
 	std::vector<sf::Int32> m_local_player_identifiers;
 	State::Context m_context;
+
+	std::vector<sf::Vector2f> m_existingAsteroides;
+	std::vector<int> m_existingAsteroidesSize;
 };
 

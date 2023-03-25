@@ -31,8 +31,10 @@ World::World(sf::RenderTarget& output_target, FontHolder& font, SoundPlayer& sou
 	,m_networked_world(networked)
 	,m_network_node(nullptr)
 	,m_finish_sprite(nullptr)
-	,m_context(context),
-	m_socket(context.socket)
+	,m_context(context)
+	,m_socket(context.socket)
+	,m_existingAsteroides()
+	,m_existingAsteroidesSize()
 {
 	//center spawn position
 	m_spawn_position.x = m_world_bounds.width / 2.f;
@@ -593,8 +595,8 @@ void World::SpawnAsteroides(int nbAsteroides)
 	srand(1);
 
 	//list of existing asteroides position and size
-	std::vector<sf::Vector2f> existingAsteroides;
-	std::vector<int> existingAsteroidesSize;
+	std::vector<sf::Vector2f> m_existingAsteroides;
+	std::vector<int> m_existingAsteroidesSize;
 
 	//Spawn the asteroids
 	for (int i = 0; i < nbAsteroides; i++)
@@ -602,14 +604,14 @@ void World::SpawnAsteroides(int nbAsteroides)
 		//get a random size between 50px and 200px with a step of 50px
 		int size = 50 * (rand() % 4 + 1);
 
-		sf::Vector2f pos = GetRandomPosition(size, existingAsteroides, existingAsteroidesSize);
+		sf::Vector2f pos = GetRandomPosition(size, m_existingAsteroides, m_existingAsteroidesSize);
 
 		//skip if there is no valid position for this size. Get random position return a (0,0) if there where to many attemps 
 		if (pos == sf::Vector2f(0.f, 0.f)) continue;
 
 		//add pos and size to history
-		existingAsteroides.push_back(pos);
-		existingAsteroidesSize.push_back(size);
+		m_existingAsteroides.push_back(pos);
+		m_existingAsteroidesSize.push_back(size);
 
 		//create it and add it to the scene
 		std::unique_ptr<Asteroid> asteroid(new Asteroid(size, m_textures));
@@ -669,6 +671,11 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 
 
 
+}
+
+sf::Vector2f World::validRespawnPosition()
+{
+	return GetRandomPosition(10, m_existingAsteroides, m_existingAsteroidesSize);
 }
 
 void World::SetSocket(sf::TcpSocket* socket) {

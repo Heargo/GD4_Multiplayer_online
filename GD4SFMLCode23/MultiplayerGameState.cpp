@@ -44,6 +44,7 @@ MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, b
 	, m_client_timeout(sf::seconds(2.f))
 	, m_time_since_last_packet(sf::seconds(0.f))
 	, m_context(context)
+	, m_local_plane_destroyed(false)
 {
 	m_broadcast_text.setFont(context.fonts->Get(Font::kMain));
 	m_broadcast_text.setPosition(1024.f/2, 100.f);
@@ -62,6 +63,14 @@ MultiplayerGameState::MultiplayerGameState(StateStack& stack, Context context, b
 	m_failed_connection_text.setString("Attempting to connect...");
 	Utility::CentreOrigin(m_failed_connection_text);
 	m_failed_connection_text.setPosition(m_window.getSize().x/2.f, m_window.getSize().y/2.f);
+
+	m_respawn_text.setFont(context.fonts->Get(Font::kMain));
+	m_respawn_text.setCharacterSize(35);
+	m_respawn_text.setFillColor(sf::Color::White);
+	m_respawn_text.setString("Press Enter to respawn");
+	Utility::CentreOrigin(m_respawn_text);
+	m_respawn_text.setPosition(m_window.getSize().x / 2.f, m_window.getSize().y / 2.f);
+	
 	
 	//Render an establishing connection frame for user feedback
 	m_window.clear(sf::Color::Black);
@@ -120,6 +129,12 @@ void MultiplayerGameState::Draw()
 		}
 		
 		m_window.draw(m_leaderboard_text);
+
+		//if local player is dead, show respawn text
+		if (m_local_plane_destroyed && m_player_invitation_time < sf::seconds(0.5f))
+		{
+			m_window.draw(m_respawn_text);
+		}
 	}
 	else
 	{
@@ -136,7 +151,6 @@ bool MultiplayerGameState::Update(sf::Time dt)
 
 		//Remove players whose aircraft were destroyed
 		bool found_local_plane = false;
-		bool local_plane_destroyed = false;
 		for (auto itr = m_players.begin(); itr != m_players.end();)
 		{
 			//Check if there are no more local planes for remote clients
@@ -145,7 +159,7 @@ bool MultiplayerGameState::Update(sf::Time dt)
 				found_local_plane = true;
 				if (m_world.GetAircraft(itr->first) && m_world.GetAircraft(itr->first)->IsMarkedForRemoval())
 				{
-					local_plane_destroyed = true;
+					m_local_plane_destroyed = true;
 				}
 			}
 
@@ -159,14 +173,6 @@ bool MultiplayerGameState::Update(sf::Time dt)
 			//}
 		}
 		
-		if (local_plane_destroyed && m_game_started)
-		{
-			
-			m_context.playerID = m_local_player_identifiers[0];
-			//log 
-			std::cout << "Local plane destroyed, pushing game over state" << std::endl;
-			RequestStackPush(StateID::kNetworkGameOver);
-		}
 
 		//Only handle the realtime input if the window has focus and the game is unpaused
 		if (m_active_state && m_has_focus)
@@ -275,13 +281,20 @@ bool MultiplayerGameState::HandleEvent(const sf::Event& event)
 
 	if (event.type == sf::Event::KeyPressed)
 	{
-		//If enter pressed, add second player co-op only if there is only 1 player
-		/*if (event.key.code == sf::Keyboard::Return && m_local_player_identifiers.size() == 1)
+		//If enter pressed and the local plane is destroyed, send a respawn request
+		if (event.key.code == sf::Keyboard::Return && m_local_plane_destroyed)
 		{
 			sf::Packet packet;
-			packet << static_cast<sf::Int32>(Client::PacketType::kRequestCoopPartner);
+			packet << static_cast<sf::Int32>(Client::PacketType::kRespawn);
+			packet << m_local_player_identifiers[0];
 			m_socket.send(packet);
-		}*/
+
+			//respawn player
+			m_local_plane_destroyed = false;
+			Aircraft* aircraft = m_world.AddAircraft(m_local_player_identifiers[0],true);
+			sf::Vector2f respawn_position = m_world.validRespawnPosition();
+			aircraft->setPosition(respawn_position.x, respawn_position.y);
+		}
 		//If escape is pressed, show the pause screen
 		if (event.key.code == sf::Keyboard::Escape)
 		{
@@ -392,6 +405,14 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y;
 		//if indentifier in local player identifiers, then this is a local player
 		bool is_local = std::find(m_local_player_identifiers.begin(), m_local_player_identifiers.end(), aircraft_identifier) != m_local_player_identifiers.end();
+		
+		if (is_local)
+		{
+			std::cout << "Local player " << aircraft_identifier << " spawned" << std::endl;
+		}
+		else
+			std::cout << "Remote player " << aircraft_identifier << " spawned" << std::endl;
+		
 		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier, is_local);
 		aircraft->setPosition(aircraft_position);
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, nullptr));
