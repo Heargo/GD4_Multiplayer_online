@@ -1,13 +1,13 @@
-// HUGO REY D00262075 : change textures constant to fit the game
-
 #pragma once
 enum class Texture
 {
-	kBackground,
-	kPlayer1,
-	kPlayer2,
-	kAsteroid, 
-	kAvenger,
+	kEntities,
+	kSpace,
+	kButtons,
+	kExplosion,
+	kParticle,
+	kLocalPlayer,
+	kRemotePlayer,
 	kMissile,
 	kTitleScreen,
 	kButtonNormal,
@@ -17,5 +17,7 @@ enum class Texture
 	kHealthRefill,
 	kMissileRefill,
 	kFireSpread,
-	kFireRate
+	kFireRate,
+	kAsteroid,
+	kFinishLine
 };

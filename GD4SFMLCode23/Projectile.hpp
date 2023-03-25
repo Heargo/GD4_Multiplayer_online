@@ -1,42 +1,30 @@
 #pragma once
-
-#include "Entity.hpp"
-#include "ResourceIdentifiers.hpp"
 #include <SFML/Graphics/Sprite.hpp>
+#include "Entity.hpp"
+#include "ProjectileType.hpp"
+#include "ResourceIdentifiers.hpp"
 
-//uncertain about this class - look back later
 class Projectile : public Entity
 {
 public:
-	enum Type
-	{
-		kAlliedBullet,
-		kEnemyBullet,
-		kMissile,
-		kProjectileCount
-	};
+	Projectile(ProjectileType type, const TextureHolder& textures, int owner_identifier);
+	void GuideTowards(sf::Vector2f position);
+	bool IsGuided() const;
 
-
-public:
-	Projectile(Type type, const TextureHolder& textures);
-
-	void guideTowards(sf::Vector2f position);
-	bool isGuided() const;
-
-	virtual unsigned int getCategory() const;
-	virtual sf::FloatRect getBoundingRect() const;
-	float getMaxSpeed() const;
-	int getDamage() const;
-
+	unsigned int GetCategory() const override;
+	sf::FloatRect GetBoundingRect() const override;
+	float GetMaxSpeed() const;
+	int GetDamage() const;
+	int GetOwnerIdentifier() const;
 
 private:
-	virtual void updateCurrent(sf::Time dt, CommandQueue& commands);
-	virtual void drawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
-
+	virtual void UpdateCurrent(sf::Time dt, CommandQueue& commands) override;
+	virtual void DrawCurrent(sf::RenderTarget& target, sf::RenderStates states) const override;
 
 private:
-	Type m_type;
+	ProjectileType m_type;
 	sf::Sprite m_sprite;
-	sf::Vector2f m_targetDirection;
+	sf::Vector2f m_target_direction;
+	int m_owner_identifier;
 };
 

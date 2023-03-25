@@ -1,28 +1,26 @@
 #pragma once
-
-#ifndef BOOK_SCENENODE_HPP
-#define BOOK_SCENENODE_HPP
-
 #include <SFML/System/NonCopyable.hpp>
 #include <SFML/System/Time.hpp>
 #include <SFML/Graphics/Transformable.hpp>
 #include <SFML/Graphics/Drawable.hpp>
 #include "CommandQueue.hpp"
+#include "ReceiverCategories.hpp"
+#include "Command.hpp"
+
 #include <memory>
 #include <vector>
-#include <string>
+#include <set>
 
-class Command;
 
 
 class SceneNode : public sf::Transformable, public sf::Drawable, private sf::NonCopyable
 {
 public:
 	typedef std::unique_ptr<SceneNode> Ptr;
-	std::string sceneNodeName;
+	typedef std::pair<SceneNode*, SceneNode*> Pair;
 
 public:
-	SceneNode();
+	explicit SceneNode(ReceiverCategories category = ReceiverCategories::kNone);
 	void AttachChild(Ptr child);
 	Ptr DetachChild(const SceneNode& node);
 
@@ -32,8 +30,13 @@ public:
 	sf::Transform GetWorldTransform() const;
 
 	void OnCommand(const Command& command, sf::Time dt);
+	virtual sf::FloatRect GetBoundingRect() const;
+	void DrawBoundingRect(sf::RenderTarget& target, sf::RenderStates states, sf::FloatRect& rect) const;
 
-	void DetectCollisionAndApplyDamage(); //const TextureHolder& textures
+	void CheckSceneCollision(SceneNode& scene_graph, std::set<Pair>& collision_pairs);
+	
+	virtual unsigned int GetCategory() const;
+	void RemoveWrecks();
 
 private:
 	virtual void UpdateCurrent(sf::Time dt, CommandQueue& commands);
@@ -44,13 +47,19 @@ private:
 	virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const;
 	virtual void DrawCurrent(sf::RenderTarget& target, sf::RenderStates states) const;
 	void DrawChildren(sf::RenderTarget& target, sf::RenderStates states) const;
-	virtual unsigned int GetCategory() const;
 	
+	void CheckNodeCollision(SceneNode& node, std::set<Pair>& collisionPairs);
+	virtual bool IsDestroyed() const;
+	virtual bool IsMarkedForRemoval() const;
+	
+	
+
 private:
 	std::vector<Ptr> m_children;
-	std::vector<Ptr> m_children_to_remove;
 	SceneNode* m_parent;
+	ReceiverCategories m_default_category;
 
 };
-#endif // BOOK_SCENENODE_HPP
+float Distance(const SceneNode& lhs, const SceneNode& rhs);
+bool Collision(const SceneNode& lhs, const SceneNode& rhs);
 

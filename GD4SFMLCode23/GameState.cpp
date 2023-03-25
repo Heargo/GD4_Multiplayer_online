@@ -1,13 +1,16 @@
-//HUGO REY D00262075 : Add the game over handling here since to change state I need to access the stack
-
 #include "GameState.hpp"
 #include "Player.hpp"
+#include <iostream>
 
 GameState::GameState(StateStack& stack, Context context)
     : State(stack, context)
-    , m_world(*context.window, *context.fonts)
-    , m_player(*context.player)
+    , m_world(*context.window, *context.fonts, *context.sounds, context, false)
+    , m_player(nullptr, 1, context.keys1)
 {
+    m_world.AddAircraft(1,true);
+    m_player.SetMissionStatus(MissionStatus::kMissionRunning);
+    // Play game theme
+    context.music->Play(MusicThemes::kMissionTheme);
 }
 
 void GameState::Draw()
@@ -18,16 +21,15 @@ void GameState::Draw()
 bool GameState::Update(sf::Time dt)
 {
     m_world.Update(dt);
-	AircraftType game_over = m_world.IsGameOver();
-	if (game_over != AircraftType::kNone)
+    if (!m_world.HasAlivePlayer())
     {
-        RequestStackPop();
-		if (game_over == AircraftType::kPlayer1)
-			EditContextCustomInfo("Player 2 wins!");
-        else if(game_over == AircraftType::kPlayer2)
-            EditContextCustomInfo("Player 1 wins!");
-		
-		RequestStackPush(StateID::kGameOver);
+        m_player.SetMissionStatus(MissionStatus::kMissionFailure);
+        RequestStackPush(StateID::kGameOver);
+    }
+    else if (m_world.HasPlayerReachedEnd())
+    {
+        m_player.SetMissionStatus(MissionStatus::kMissionSuccess);
+        RequestStackPush(StateID::kMissionSuccess);
     }
     CommandQueue& commands = m_world.GetCommandQueue();
     m_player.HandleRealtimeInput(commands);
