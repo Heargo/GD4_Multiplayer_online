@@ -180,7 +180,8 @@ void Aircraft::UpdateTexts()
 	m_health_display->setPosition(0.f, 50.f);
 	m_health_display->setRotation(-getRotation());
 
-	if (m_missile_display)
+	// repurpose the missile display to show the position of the player
+	/*if (m_missile_display)
 	{
 		if (m_missile_ammo == 0)
 		{
@@ -193,7 +194,7 @@ void Aircraft::UpdateTexts()
 			m_health_display->setPosition(0.f, 100.f);
 			m_health_display->setRotation(-getRotation());
 		}
-	}
+	}*/
 }
 
 void Aircraft::UpdateMovementPattern(sf::Time dt)
