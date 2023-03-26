@@ -647,7 +647,15 @@ void MultiplayerGameState::UpdateLeaderboardText()
 {
 	//Update the leaderboard text
 	std::string leaderboard_text = "Leaderboard:\n";
-	for (auto& pair : m_leaderboard)
+
+	//sort leaderboard by score
+	std::vector<std::pair<int, int>> leaderboard_vector(m_leaderboard.begin(), m_leaderboard.end());
+	std::sort(leaderboard_vector.begin(), leaderboard_vector.end(), [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+		return a.second > b.second;
+		});
+	
+
+	for (auto& pair : leaderboard_vector)
 	{
 		leaderboard_text += "Player "+ std::to_string(pair.first) + " : " + std::to_string(pair.second) + "\n";
 	}
