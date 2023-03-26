@@ -310,7 +310,7 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 		sf::Int32 killer;
 		sf::Int32 victim;
 		packet >> killer >> victim;
-		std::cout << "GET kLeaderbordUpdate from client" << killer<< victim << std::endl;
+		std::cout << "GET kLeaderbordUpdate from client" << killer << victim << std::endl;
 		sf::Packet notif_packet;
 		notif_packet << static_cast<sf::Int32>(Server::PacketType::kLeaderbordUpdate);
 		notif_packet << killer << victim;
@@ -333,7 +333,7 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 		sf::Vector2f respawn_position;
 		packet >> aircraft_identifier;
 		packet >> respawn_position.x >> respawn_position.y;
-		std::cout << "SERVER Respawn player "<< aircraft_identifier << std::endl;
+		//std::cout << "SERVER Respawn player "<< aircraft_identifier << std::endl;
 
 		// Update the aircraft info
 		m_aircraft_info[aircraft_identifier].m_position = respawn_position;
@@ -376,7 +376,7 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 			
 			if (aircraft_identifier < 0) break;
 			
-			std::cout << "SERVER Received position update from client " << aircraft_identifier << " at " << aircraft_position.x << " " << aircraft_position.y << " with " << aircraft_hitpoints << " hitpoints and " << missile_ammo << " missiles" << std::endl;
+			//std::cout << "SERVER Received position update from client " << aircraft_identifier << " at " << aircraft_position.x << " " << aircraft_position.y << " with " << aircraft_hitpoints << " hitpoints and " << missile_ammo << " missiles" << std::endl;
 			m_aircraft_info[aircraft_identifier].m_position = aircraft_position;
 			m_aircraft_info[aircraft_identifier].m_hitpoints = aircraft_hitpoints;
 			m_aircraft_info[aircraft_identifier].m_missile_ammo = missile_ammo;
@@ -423,7 +423,7 @@ void GameServer::HandleIncomingConnections()
 	if (m_listener_socket.accept(m_peers[m_connected_players]->m_socket) == sf::TcpListener::Done)
 	{
 		//Order the new client to spawn its player 1
-		m_aircraft_info[m_aircraft_identifer_counter].m_position = sf::Vector2f(m_battlefield_rect.width / 2, m_battlefield_rect.top + m_battlefield_rect.height / 2);
+		m_aircraft_info[m_aircraft_identifer_counter].m_position = sf::Vector2f(1250, 1800);
 		m_aircraft_info[m_aircraft_identifer_counter].m_hitpoints = 100;
 		m_aircraft_info[m_aircraft_identifer_counter].m_missile_ammo = 2;
 
@@ -549,7 +549,7 @@ void GameServer::UpdateClientState()
 	for (const auto& aircraft : m_aircraft_info)
 	{
 		sf::Int32 score = 0;
-		std::cout << "SERVEUR sending Aircraft ID: " << aircraft.first << std::endl;
+		//std::cout << "SERVEUR sending Aircraft ID: " << aircraft.first << std::endl;
 		update_client_state_packet << aircraft.first << aircraft.second.m_position.x << aircraft.second.m_position.y << aircraft.second.m_hitpoints << aircraft.second.m_missile_ammo << aircraft.second.m_rotation << aircraft.second.score;
 	}
 

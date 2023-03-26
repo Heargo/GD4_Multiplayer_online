@@ -51,6 +51,7 @@ Aircraft::Aircraft(AircraftType type, const TextureHolder& textures, const FontH
 	, m_explosion_began(false)
 	, m_spawned_pickup(false)
 	, m_pickups_enabled(true)
+	, m_is_local_player(isLocalPlayer)
 	
 {
 
@@ -108,6 +109,11 @@ Aircraft::Aircraft(AircraftType type, const TextureHolder& textures, const FontH
 int Aircraft::GetMissileAmmo() const
 {
 	return m_missile_ammo;
+}
+
+bool Aircraft::IsLocalPlayer() const
+{
+	return m_is_local_player;
 }
 
 void Aircraft::SetMissileAmmo(int ammo)
@@ -174,7 +180,7 @@ void Aircraft::UpdateTexts()
 	m_health_display->setPosition(0.f, 50.f);
 	m_health_display->setRotation(-getRotation());
 
-	/*if (m_missile_display)
+	if (m_missile_display)
 	{
 		if (m_missile_ammo == 0)
 		{
@@ -187,7 +193,7 @@ void Aircraft::UpdateTexts()
 			m_health_display->setPosition(0.f, 100.f);
 			m_health_display->setRotation(-getRotation());
 		}
-	}*/
+	}
 }
 
 void Aircraft::UpdateMovementPattern(sf::Time dt)

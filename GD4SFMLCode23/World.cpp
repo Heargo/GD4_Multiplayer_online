@@ -265,7 +265,7 @@ void World::BuildScene()
 	//AddEnemies();
 
 	//create the asteroid field
-	//SpawnAsteroides(80);
+	SpawnAsteroides(40);
 }
 
 void World::AdaptPlayerPosition()
@@ -598,9 +598,9 @@ void World::SpawnAsteroides(int nbAsteroides)
 	//hardcoded seed for now 
 	srand(1);
 
-	//list of existing asteroides position and size
-	std::vector<sf::Vector2f> m_existingAsteroides;
-	std::vector<int> m_existingAsteroidesSize;
+	////list of existing asteroides position and size
+	//std::vector<sf::Vector2f> m_existingAsteroides;
+	//std::vector<int> m_existingAsteroidesSize;
 
 	//Spawn the asteroids
 	for (int i = 0; i < nbAsteroides; i++)
@@ -636,9 +636,6 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 
 	//position is within word size
 	int marginWorld = 50;
-	//random x between margin world and world size - margin world
-	//int xRange = m_world_bounds.width - 2 * marginWorld;
-	//int yRange = m_world_bounds.height - 2 * marginWorld;
 	
 	//random position
 	int x = (rand() % int(m_world_bounds.width - margin)) + margin;
@@ -646,29 +643,32 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 
 
 	int attemps = 0;
-
-	//while the position is too close from an existing asteriod, we try other position within 10 attemps limit.
+	//while the position is too close from an existing asteriod, we try other position within 100 attemps limit.
 	do {
 		for (int j = 0; j < existingAsteroides.size(); j++)
 		{
 			float distance = std::sqrt((existingAsteroides[j].x - x) * (existingAsteroides[j].x - x) + (existingAsteroides[j].y - y) * (existingAsteroides[j].y - y));
-			if (distance <= existingAsteroidesSize[j] + size + margin)
+			if (distance <= (existingAsteroidesSize[j] + size + margin))
 			{
 				tooClose = true;
 				x = (rand() % int(m_world_bounds.width - margin)) + margin;
 				y = ((rand() % int(m_world_bounds.height - margin)) + margin);
+				//std::cout << "point too close !!!" << std::endl;
 				break;
 			}
 			else
 			{
 				tooClose = false;
+				//std::cout << " pos is ok compared to asteroid " << j << " it's " << distance << " from it" << std::endl;
 			}
 		}
 		attemps++;
-	} while (tooClose && attemps < 10);
+	} while (tooClose && attemps < 100);
+
+	std::cout << " found pos after " << attemps << " attemps " << "(" << x <<"," <<y<<")" << std::endl;
 
 	//return (0,0) position if there is no room for the asteroid of the size given.
-	if (attemps == 10)
+	if (attemps == 100)
 	{
 		x = 0.f;
 		y = 0.f;
@@ -682,7 +682,9 @@ sf::Vector2f World::GetRandomPosition(int size, std::vector<sf::Vector2f> existi
 
 sf::Vector2f World::validRespawnPosition()
 {
-	return GetRandomPosition(10, m_existingAsteroides, m_existingAsteroidesSize);
+	//std::cout << "existing asteroides " << m_existingAsteroides.size() << std::endl;
+	//std::cout << "existing asteroides size " << m_existingAsteroidesSize.size() << std::endl;
+	return GetRandomPosition(100, m_existingAsteroides, m_existingAsteroidesSize);
 }
 
 void World::SetSocket(sf::TcpSocket* socket) {

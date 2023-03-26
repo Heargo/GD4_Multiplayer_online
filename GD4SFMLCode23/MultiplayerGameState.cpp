@@ -285,8 +285,9 @@ bool MultiplayerGameState::HandleEvent(const sf::Event& event)
 		//If enter pressed and the local plane is destroyed, send a respawn request
 		if (event.key.code == sf::Keyboard::Return && m_local_plane_destroyed)
 		{
-			std::cout << "Respawn request sent from client" << std::endl;
 			sf::Vector2f respawn_position = m_world.validRespawnPosition();
+			
+			std::cout << "Respawn request sent from client" << respawn_position.x << "," << respawn_position.y << std::endl;
 			sf::Packet packet;
 			packet << static_cast<sf::Int32>(Client::PacketType::kRespawn);
 			packet << m_local_player_identifiers[0];
@@ -403,7 +404,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 		sf::Vector2f aircraft_position;
 		packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y;
 		Aircraft* aircraft = m_world.AddAircraft(aircraft_identifier,true);
-		aircraft->setPosition(aircraft_position);
+		aircraft->setPosition(m_world.validRespawnPosition());
 		m_players[aircraft_identifier].reset(new Player(&m_socket, aircraft_identifier, GetContext().keys1));
 		m_local_player_identifiers.push_back(aircraft_identifier);
 		//TODO LOCAL PLAYER
@@ -602,6 +603,29 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 
 void MultiplayerGameState::ModifyLeaderboard(int key, int modifier)
 {
+	//save highscore
+	if (key == m_local_player_identifiers[0])
+	{
+		int current_score = m_leaderboard[key];
+		int highscore=0;
+		std::ifstream file("highscore.txt");
+		if (file.is_open())
+		{
+			file >> highscore;
+			file.close();
+		}
+		if (current_score + modifier > highscore)
+		{
+			std::cout << "new highscore " << current_score << std::endl;
+			std::ofstream file("highscore.txt");
+			if (file.is_open())
+			{
+				file << current_score;
+				file.close();
+			}
+		}
+	}
+	
 	// check if key exists in the map or not
 	std::map<int, int>::iterator it = m_leaderboard.find(key);
 

@@ -84,15 +84,15 @@ void Entity::SetHitpoints(int points)
 
 void Entity::Repair(unsigned int points)
 {
-    assert(points > 0);
+    if(points > 0);
     //TODO Limit hitpoints
-    m_hitpoints += points;
+        m_hitpoints += points;
 }
 
 void Entity::Damage(unsigned int points)
 {
-    assert(points > 0);
-    m_hitpoints -= points;
+    if(points > 0);
+        m_hitpoints -= points;
 }
 
 void Entity::Destroy()

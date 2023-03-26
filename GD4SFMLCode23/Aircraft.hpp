@@ -36,6 +36,7 @@ public:
 	void Remove() override;
 	void PlayLocalSound(CommandQueue& commands, SoundEffect effect);
 	void RotateInMouseDirection(sf::Vector2i mousePos, sf::RenderWindow& window);
+	bool IsLocalPlayer() const;
 
 private:
 	virtual void DrawCurrent(sf::RenderTarget& target, sf::RenderStates states) const override;
@@ -71,6 +72,7 @@ private:
 	bool m_explosion_began;
 	bool m_spawned_pickup;
 	bool m_pickups_enabled;
+	bool m_is_local_player;
 	
 	int m_identifier;
 };

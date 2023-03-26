@@ -5,6 +5,10 @@
 #include "Utility.hpp"
 #include "Button.hpp"
 
+#include <iostream>
+#include <fstream>
+#include <string>
+
 MenuState::MenuState(StateStack& stack, Context context)
     :State(stack, context)
 {
@@ -56,6 +60,26 @@ MenuState::MenuState(StateStack& stack, Context context)
         RequestStackPop();
     });
 
+    //read file hightscore.txt to extract score
+    std::ifstream file("highscore.txt");
+	std::string line;
+	std::string score;
+	while (std::getline(file, line))
+	{
+		score = line;
+	}
+	file.close();
+    
+
+
+    m_highscore_text.setFont(context.fonts->Get(Font::kMain));
+    m_highscore_text.setCharacterSize(35);
+    m_highscore_text.setFillColor(sf::Color::White);
+    m_highscore_text.setString("Best score:"+score);
+    Utility::CentreOrigin(m_highscore_text);
+    m_highscore_text.setPosition(500,300);
+    
+
     m_gui_container.Pack(play_button);
     m_gui_container.Pack(host_play_button);
     m_gui_container.Pack(join_play_button);
@@ -72,6 +96,8 @@ void MenuState::Draw()
     window.setView(window.getDefaultView());
     window.draw(m_background_sprite);
     window.draw(m_gui_container);
+
+	window.draw(m_highscore_text);
 }
 
 bool MenuState::Update(sf::Time dt)

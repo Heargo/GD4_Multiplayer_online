@@ -17,5 +17,6 @@ public:
 private:
 	sf::Sprite m_background_sprite;
 	GUI::Container m_gui_container;
+	sf::Text m_highscore_text;
 };
 
