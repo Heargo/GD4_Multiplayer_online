@@ -345,6 +345,7 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 		notify_packet << aircraft_identifier;
 		notify_packet << m_aircraft_info[aircraft_identifier].m_position.x;
 		notify_packet << m_aircraft_info[aircraft_identifier].m_position.y;
+		std::cout << "SERVER Respawn player " << aircraft_identifier << ". Updated aicraft infos and player is at " << m_aircraft_info[aircraft_identifier].m_position.x << " " << m_aircraft_info[aircraft_identifier].m_position.y << std::endl;
 		
 
 		for (PeerPtr& peer : m_peers)
@@ -372,6 +373,10 @@ void GameServer::HandleIncomingPacket(sf::Packet& packet, RemotePeer& receiving_
 			sf::Int32 score;
 			float aircraft_rotation;
 			packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y >> aircraft_hitpoints >> missile_ammo >> aircraft_rotation >> score;
+			
+			if (aircraft_identifier < 0) break;
+			
+			std::cout << "SERVER Received position update from client " << aircraft_identifier << " at " << aircraft_position.x << " " << aircraft_position.y << " with " << aircraft_hitpoints << " hitpoints and " << missile_ammo << " missiles" << std::endl;
 			m_aircraft_info[aircraft_identifier].m_position = aircraft_position;
 			m_aircraft_info[aircraft_identifier].m_hitpoints = aircraft_hitpoints;
 			m_aircraft_info[aircraft_identifier].m_missile_ammo = missile_ammo;
@@ -544,6 +549,7 @@ void GameServer::UpdateClientState()
 	for (const auto& aircraft : m_aircraft_info)
 	{
 		sf::Int32 score = 0;
+		std::cout << "SERVEUR sending Aircraft ID: " << aircraft.first << std::endl;
 		update_client_state_packet << aircraft.first << aircraft.second.m_position.x << aircraft.second.m_position.y << aircraft.second.m_hitpoints << aircraft.second.m_missile_ammo << aircraft.second.m_rotation << aircraft.second.score;
 	}
 

@@ -250,7 +250,7 @@ bool MultiplayerGameState::Update(sf::Time dt)
 					//rotate the aircraft to face mouse position
 					sf::Vector2i mousePos = sf::Mouse::getPosition(m_window);
 					aircraft->RotateInMouseDirection(mousePos, m_window);
-					
+					//std::cout << "Sending position update for aircraft " << identifier << std::endl;
 					position_update_packet << identifier << aircraft->getPosition().x << aircraft->getPosition().y << static_cast<sf::Int32>(aircraft->GetHitPoints()) << static_cast<sf::Int32>(aircraft->GetMissileAmmo()) << aircraft->getRotation() << m_leaderboard[identifier];
 				}
 			}
@@ -564,6 +564,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 	{
 		sf::Int32 aircraft_count;
 		packet >> aircraft_count;
+		//std::cout << "update client state with " << aircraft_count << " aircrafts "<< std::endl;
 		for (sf::Int32 i = 0; i < aircraft_count; ++i)
 		{
 			sf::Vector2f aircraft_position;
@@ -573,7 +574,7 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 			sf::Int32 score;
 			float rotation;
 			packet >> aircraft_identifier >> aircraft_position.x >> aircraft_position.y >> hitpoints >> ammo >> rotation >> score;
-
+			//std::cout << " aicraft id " << aircraft_identifier << " position " << aircraft_position.x << " " << aircraft_position.y << " hitpoints " << hitpoints << " ammo " << ammo << " rotation " << rotation << " score " << score << std::endl;
 			Aircraft* aircraft = m_world.GetAircraft(aircraft_identifier);
 			bool is_local_plane = std::find(m_local_player_identifiers.begin(), m_local_player_identifiers.end(), aircraft_identifier) != m_local_player_identifiers.end();
 			
@@ -589,10 +590,10 @@ void MultiplayerGameState::HandlePacket(sf::Int32 packet_type, sf::Packet& packe
 				m_leaderboard[aircraft_identifier] = score;
 			}
 
-			if (!aircraft)
+			/*if (!aircraft)
 			{
 				std::cout << "aircraft "<< aircraft_identifier << " not found" << std::endl;
-			}
+			}*/
 		}
 	}
 	break;
